@@ -99,7 +99,7 @@ export async function magicFillTab() {
  */
 export async function saveFieldData(data) {
     return new Promise((resolve) => {
-        chrome.storage.sync.set(data, resolve);
+        chrome.storage.local.set(data, resolve);
     });
 }
 /**
@@ -107,7 +107,7 @@ export async function saveFieldData(data) {
  */
 export async function loadFieldData(keys) {
     return new Promise((resolve) => {
-        chrome.storage.sync.get(keys, resolve);
+        chrome.storage.local.get(keys, resolve);
     });
 }
 /**
@@ -115,7 +115,7 @@ export async function loadFieldData(keys) {
  */
 export async function getAllProfiles() {
     return new Promise((resolve) => {
-        chrome.storage.sync.get(["profiles"], (result) => {
+        chrome.storage.local.get(["profiles"], (result) => {
             resolve(result.profiles || {});
         });
     });
@@ -125,7 +125,7 @@ export async function getAllProfiles() {
  */
 export async function saveAllProfiles(profiles) {
     return new Promise((resolve) => {
-        chrome.storage.sync.set({ profiles }, resolve);
+        chrome.storage.local.set({ profiles }, resolve);
     });
 }
 /**
@@ -155,7 +155,7 @@ export async function deleteProfile(profileId) {
     // Also delete associated field data
     const keysToRemove = [];
     const allData = await new Promise((resolve) => {
-        chrome.storage.sync.get(null, resolve);
+        chrome.storage.local.get(null, resolve);
     });
     for (const key in allData) {
         if (key.startsWith(`autofill_${profileId}_`)) {
@@ -164,7 +164,7 @@ export async function deleteProfile(profileId) {
     }
     if (keysToRemove.length > 0) {
         await new Promise((resolve) => {
-            chrome.storage.sync.remove(keysToRemove, resolve);
+            chrome.storage.local.remove(keysToRemove, resolve);
         });
     }
 }

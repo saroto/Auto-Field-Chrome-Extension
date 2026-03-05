@@ -43,10 +43,10 @@
         console.warn("Autofill Extension: Active input has no name or id attribute.");
         return;
       }
-      const activeProfileData = await chrome.storage.sync.get("activeProfile");
+      const activeProfileData = await chrome.storage.local.get("activeProfile");
       const activeProfile = activeProfileData.activeProfile || "Profile1";
       const storageKey = `${STORAGE_KEY_PREFIX}_${activeProfile}_${nameAttr}`;
-      const data = await chrome.storage.sync.get(storageKey);
+      const data = await chrome.storage.local.get(storageKey);
       if (data[storageKey] !== void 0) {
         setTimeout(() => {
           if (activeInput) {
@@ -284,7 +284,7 @@
 
   // src/content/services/formFiller.js
   async function fillAllFields(profileId) {
-    const activeProfileData = await chrome.storage.sync.get("activeProfile");
+    const activeProfileData = await chrome.storage.local.get("activeProfile");
     const activeProfileId = profileId || activeProfileData.activeProfile || "";
     if (!activeProfileId) {
       console.warn("No active profile selected");
@@ -302,7 +302,7 @@
       }
     });
     if (storageKeysToFetch.length > 0) {
-      const data = await chrome.storage.sync.get(storageKeysToFetch);
+      const data = await chrome.storage.local.get(storageKeysToFetch);
       allInputs.forEach((el) => {
         const nameAttr = el.name || el.id;
         const storageKey = `autofill_${activeProfileId}_${nameAttr}`;

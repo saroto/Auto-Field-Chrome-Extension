@@ -77,24 +77,24 @@
   }
   async function saveFieldData(data) {
     return new Promise((resolve) => {
-      chrome.storage.sync.set(data, resolve);
+      chrome.storage.local.set(data, resolve);
     });
   }
   async function loadFieldData(keys) {
     return new Promise((resolve) => {
-      chrome.storage.sync.get(keys, resolve);
+      chrome.storage.local.get(keys, resolve);
     });
   }
   async function getAllProfiles() {
     return new Promise((resolve) => {
-      chrome.storage.sync.get(["profiles"], (result) => {
+      chrome.storage.local.get(["profiles"], (result) => {
         resolve(result.profiles || {});
       });
     });
   }
   async function saveAllProfiles(profiles) {
     return new Promise((resolve) => {
-      chrome.storage.sync.set({ profiles }, resolve);
+      chrome.storage.local.set({ profiles }, resolve);
     });
   }
   async function createProfile(name, url, fields) {
@@ -117,7 +117,7 @@
     await saveAllProfiles(profiles);
     const keysToRemove = [];
     const allData = await new Promise((resolve) => {
-      chrome.storage.sync.get(null, resolve);
+      chrome.storage.local.get(null, resolve);
     });
     for (const key in allData) {
       if (key.startsWith(`autofill_${profileId}_`)) {
@@ -126,7 +126,7 @@
     }
     if (keysToRemove.length > 0) {
       await new Promise((resolve) => {
-        chrome.storage.sync.remove(keysToRemove, resolve);
+        chrome.storage.local.remove(keysToRemove, resolve);
       });
     }
   }

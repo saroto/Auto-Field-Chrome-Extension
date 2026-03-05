@@ -113,7 +113,7 @@ export async function saveFieldData(
   data: Record<string, string>,
 ): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.sync.set(data, resolve);
+    chrome.storage.local.set(data, resolve);
   });
 }
 
@@ -124,7 +124,7 @@ export async function loadFieldData(
   keys: string[],
 ): Promise<Record<string, any>> {
   return new Promise((resolve) => {
-    chrome.storage.sync.get(keys, resolve);
+    chrome.storage.local.get(keys, resolve);
   });
 }
 
@@ -133,7 +133,7 @@ export async function loadFieldData(
  */
 export async function getAllProfiles(): Promise<ProfileData> {
   return new Promise((resolve) => {
-    chrome.storage.sync.get(["profiles"], (result) => {
+    chrome.storage.local.get(["profiles"], (result) => {
       resolve((result.profiles as ProfileData) || {});
     });
   });
@@ -144,7 +144,7 @@ export async function getAllProfiles(): Promise<ProfileData> {
  */
 export async function saveAllProfiles(profiles: ProfileData): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.sync.set({ profiles }, resolve);
+    chrome.storage.local.set({ profiles }, resolve);
   });
 }
 
@@ -181,7 +181,7 @@ export async function deleteProfile(profileId: string): Promise<void> {
   // Also delete associated field data
   const keysToRemove: string[] = [];
   const allData = await new Promise<Record<string, any>>((resolve) => {
-    chrome.storage.sync.get(null, resolve);
+    chrome.storage.local.get(null, resolve);
   });
 
   for (const key in allData) {
@@ -192,7 +192,7 @@ export async function deleteProfile(profileId: string): Promise<void> {
 
   if (keysToRemove.length > 0) {
     await new Promise<void>((resolve) => {
-      chrome.storage.sync.remove(keysToRemove, resolve);
+      chrome.storage.local.remove(keysToRemove, resolve);
     });
   }
 }
