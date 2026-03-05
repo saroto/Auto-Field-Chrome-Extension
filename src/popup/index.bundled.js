@@ -359,7 +359,7 @@
         let activeProfileId = "";
         let currentFields = [];
         let currentUrl = "";
-        async function loadFields() {
+        async function loadFields(skipRestore = false) {
           try {
             currentUrl = await getCurrentTabUrl();
           } catch (_) {
@@ -369,14 +369,14 @@
             const fields = await loadFieldsFromTab();
             currentFields = fields;
             renderFields(fields, container);
-            await loadProfilesList();
+            await loadProfilesList(skipRestore);
           } catch (error) {
             container.innerHTML = '<p class="placeholder-msg">Open a page with a form and click Reload Fields.</p>';
             console.error("Error loading fields:", error);
-            await loadProfilesList();
+            await loadProfilesList(skipRestore);
           }
         }
-        async function loadProfilesList() {
+        async function loadProfilesList(skipRestore = false) {
           let profiles = await getAllProfiles();
           let profileIds = Object.keys(profiles);
           if (profileIds.length === 0) {
@@ -405,7 +405,9 @@
           if (savedActiveProfile && profiles[savedActiveProfile]) {
             activeProfileId = savedActiveProfile;
             profileSelect.value = activeProfileId;
-            await loadProfileData(activeProfileId);
+            if (!skipRestore) {
+              await loadProfileData(activeProfileId);
+            }
           }
         }
         function displayAllProfiles(profiles) {
@@ -542,7 +544,8 @@
         });
         const loadBtn = document.getElementById("loadBtn");
         loadBtn.addEventListener("click", async () => {
-          await loadFields();
+          clearFieldInputs();
+          await loadFields(true);
           showStatus("Fields reloaded!", "#6366f1");
         });
         saveBtn.addEventListener("click", async () => {

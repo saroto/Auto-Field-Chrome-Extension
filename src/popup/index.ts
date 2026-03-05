@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   /**
    * Load available fields from current page
    */
-  async function loadFields() {
+  async function loadFields(skipRestore = false) {
     try {
       currentUrl = await popupService.getCurrentTabUrl();
     } catch (_) {
@@ -44,19 +44,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       const fields = await popupService.loadFieldsFromTab();
       currentFields = fields;
       fieldRenderer.renderFields(fields, container);
-      await loadProfilesList();
+      await loadProfilesList(skipRestore);
     } catch (error) {
       container.innerHTML =
         '<p class="placeholder-msg">Open a page with a form and click Reload Fields.</p>';
       console.error("Error loading fields:", error);
-      await loadProfilesList();
+      await loadProfilesList(skipRestore);
     }
   }
 
   /**
    * Load and display all profiles
    */
-  async function loadProfilesList() {
+  async function loadProfilesList(skipRestore = false) {
     let profiles = await popupService.getAllProfiles();
     let profileIds = Object.keys(profiles);
 
@@ -99,7 +99,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (savedActiveProfile && profiles[savedActiveProfile]) {
       activeProfileId = savedActiveProfile;
       profileSelect.value = activeProfileId;
-      await loadProfileData(activeProfileId);
+      if (!skipRestore) {
+        await loadProfileData(activeProfileId);
+      }
     }
   }
 
@@ -313,7 +315,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Reload fields button
   const loadBtn = document.getElementById("loadBtn") as HTMLButtonElement;
   loadBtn.addEventListener("click", async () => {
-    await loadFields();
+    clearFieldInputs();
+    await loadFields(true);
     showStatus("Fields reloaded!", "#6366f1");
   });
 
