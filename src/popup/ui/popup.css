@@ -1,0 +1,353 @@
+/* ── Reset ─────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: transparent;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ── Popup wrapper (border + scroll) ───────────────────────── */
+.popup-wrapper {
+  width: 340px;
+  max-height: 620px;
+  overflow-y: auto;
+  background: #f5f5f5;
+  border: 1px solid #d1d5db;
+  border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f5f5f5;
+}
+
+.popup-wrapper::-webkit-scrollbar {
+  width: 5px;
+}
+.popup-wrapper::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.popup-wrapper::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 13px;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 0;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Icon buttons (header) ─────────────────────────────────── */
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f9fafb;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
+}
+
+.icon-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.icon-btn:active {
+  transform: scale(0.93);
+}
+
+.icon-btn--save {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+.icon-btn--save:hover {
+  background: #dcfce7;
+}
+
+.icon-btn--delete {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+.icon-btn--delete:hover {
+  background: #fee2e2;
+}
+
+/* ── App body ───────────────────────────────────────────────── */
+.app-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Card ───────────────────────────────────────────────────── */
+.card {
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+}
+
+/* ── Profile row ────────────────────────────────────────────── */
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#profileSelect {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 9px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: #374151;
+  background: #f9fafb;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#profileSelect:focus {
+  outline: none;
+  border-color: #6b7280;
+}
+
+/* ── URL badge ──────────────────────────────────────────────── */
+.url-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 6px 10px;
+  background: #f9fafb;
+  border-radius: 5px;
+  border: 1px solid #e5e7eb;
+}
+
+.url-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+  padding-top: 1px;
+  flex-shrink: 0;
+}
+
+.url-text {
+  font-size: 11px;
+  color: #374151;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  line-height: 1.4;
+}
+
+/* ── Status ─────────────────────────────────────────────────── */
+#status {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  min-height: 0;
+  margin: -4px 0;
+  transition: opacity 0.3s;
+}
+
+/* ── Inputs & selects inside fieldRenderer ──────────────────── */
+input[type="checkbox"],
+input[type="radio"] {
+  width: auto;
+  padding: 0;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+  flex-shrink: 0;
+  accent-color: #374151;
+  cursor: pointer;
+}
+
+/* ── Regular buttons ────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    opacity 0.15s,
+    transform 0.1s,
+    box-shadow 0.15s;
+  font-family: inherit;
+  width: auto;
+  margin: 0;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 5px;
+  background: #374151;
+  color: white;
+  border: none;
+  flex-shrink: 0;
+}
+
+.btn--sm:hover {
+  background: #1f2937;
+}
+
+/* ── Action row ─────────────────────────────────────────────── */
+.action-row {
+  display: flex;
+  gap: 8px;
+}
+
+.btn--fill {
+  flex: 1;
+  background: #1f2937;
+  color: white;
+  box-shadow: none;
+}
+
+.btn--fill:hover {
+  background: #111827;
+}
+
+.btn--magic {
+  flex: 1;
+  background: #374151;
+  color: white;
+  box-shadow: none;
+}
+
+.btn--magic:hover {
+  background: #1f2937;
+}
+
+/* ── Card title ─────────────────────────────────────────────── */
+.card-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 9px;
+}
+
+/* ── Profiles list ──────────────────────────────────────────── */
+.profiles-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+
+.profiles-list::-webkit-scrollbar {
+  width: 4px;
+}
+.profiles-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+
+.profile-card {
+  padding: 10px 11px;
+  border-radius: 5px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
+}
+
+.profile-card:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.profile-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 3px;
+}
+
+.profile-url {
+  font-size: 10px;
+  color: #6b7280;
+  margin-bottom: 2px;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+.profile-fields {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+/* ── Placeholder message ────────────────────────────────────── */
+.placeholder-msg {
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: center;
+  padding: 8px 0;
+}

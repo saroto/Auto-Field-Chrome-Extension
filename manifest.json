@@ -4,15 +4,16 @@
   "version": "1.0",
   "manifest_version": 3,
   "action": {
-    "default_popup": "/src/index.html"
+    "default_popup": "/src/popup/popup.html"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/content.js"],
-      "css": ["src/content.css"],
+      "js": ["src/content/index.bundled.js"],
+      "css": ["src/content/ui/content.css"],
       "all_frames": true
     }
   ],
-  "permissions": ["activeTab", "storage"]
+  "permissions": ["activeTab", "storage", "tabs", "windows"],
+  "host_permissions": ["<all_urls>"]
 }

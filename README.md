@@ -25,10 +25,11 @@ Since this is a custom local extension, you must install it directly into Chrome
 
 ## Usage Guide
 
-1. **Activate the Extension**: Click the Autofill extension icon in your toolbar.
+1. **Activate the Extension**: Click the Autofill extension icon in your toolbar.c
 2. **Scan the Page**: The popup will automatically scan the current page for form fields and display them.
    - _Tip_: If you open a dialog window on the webpage _after_ opening the popup, click the orange **Load Fields** button to rescan the page for the new inputs.
-3. **Save Your Data**: Type the information you want to repeatedly use into the corresponding fields in the popup, then click **Save Settings**. (This uses `chrome.storage.sync`, so it saves securely to your browser profile).
+3. **Save Your Data**: Type the information you want to repeatedly use in
+   to the corresponding fields in the popup, then click **Save Settings**. (This uses `chrome.storage.sync`, so it saves securely to your browser profile).
 4. **Autofill (Whole Form)**: Click the blue **Fill All Fields** button in the popup to instantly inject your saved data into every matching field on the page.
 5. **Autofill (Single Field)**: Click directly into an input field on a webpage. A small green toggle button will appear next to the field. Click it to inject data into just that specific input.
 
