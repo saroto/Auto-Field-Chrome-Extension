@@ -60,9 +60,16 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     if (request.action === "GET_FIELDS") {
         const allInputs = fieldDetector.getAllInputs();
         const fields = [];
+        const seenNames = new Set();
         allInputs.forEach((el) => {
             const fieldInfo = fieldDetector.getFieldInfo(el);
             if (fieldInfo) {
+                // Deduplicate radio/checkbox groups — multiple inputs share one name
+                if ((fieldInfo.type === "radio" || fieldInfo.type === "checkbox") &&
+                    seenNames.has(fieldInfo.name)) {
+                    return;
+                }
+                seenNames.add(fieldInfo.name);
                 fields.push(fieldInfo);
             }
         });

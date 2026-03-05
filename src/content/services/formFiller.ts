@@ -1,23 +1,32 @@
 // src/content/services/formFiller.ts
 
 import { getAllInputs } from "./fieldDetector.js";
-import { IGNORED_INPUT_TYPES, STORAGE_KEY_PREFIX } from "../../shared/constants.js";
+import { IGNORED_INPUT_TYPES } from "../../shared/constants.js";
 
 /**
  * Fill all fields with saved data from the active profile
  */
-export async function fillAllFields(profile?: string): Promise<void> {
+export async function fillAllFields(profileId?: string): Promise<void> {
   const activeProfileData = await chrome.storage.sync.get("activeProfile");
-  const activeProfile = profile || activeProfileData.activeProfile || "Profile1";
+  const activeProfileId = profileId || activeProfileData.activeProfile || "";
+
+  if (!activeProfileId) {
+    console.warn("No active profile selected");
+    return;
+  }
+
   const allInputs = getAllInputs();
   const storageKeysToFetch: string[] = [];
 
   allInputs.forEach((el) => {
-    const type = el instanceof HTMLSelectElement ? "select" : (el as HTMLInputElement).type?.toLowerCase();
+    const type =
+      el instanceof HTMLSelectElement
+        ? "select"
+        : (el as HTMLInputElement).type?.toLowerCase();
     if (!IGNORED_INPUT_TYPES.includes(type as any)) {
       const nameAttr = el.name || el.id;
       if (nameAttr) {
-        storageKeysToFetch.push(`${STORAGE_KEY_PREFIX}_${activeProfile}_${nameAttr}`);
+        storageKeysToFetch.push(`autofill_${activeProfileId}_${nameAttr}`);
       }
     }
   });
@@ -26,18 +35,27 @@ export async function fillAllFields(profile?: string): Promise<void> {
     const data = await chrome.storage.sync.get(storageKeysToFetch);
     allInputs.forEach((el) => {
       const nameAttr = el.name || el.id;
-      const storageKey = `${STORAGE_KEY_PREFIX}_${activeProfile}_${nameAttr}`;
-      if (nameAttr && data[storageKey]) {
+      const storageKey = `autofill_${activeProfileId}_${nameAttr}`;
+      if (nameAttr && data[storageKey] !== undefined) {
         const value = data[storageKey] as string;
         if (el instanceof HTMLSelectElement) {
           el.value = value;
+        } else if (el instanceof HTMLInputElement && el.type === "radio") {
+          el.checked = el.value === value;
+        } else if (el instanceof HTMLInputElement && el.type === "checkbox") {
+          // Checkbox group: saved as comma-separated values; single: "true"/"false"
+          const checkedValues = value.split(",");
+          el.checked = checkedValues.includes(el.value) || value === "true";
         } else {
-          el.value = value;
+          (el as HTMLInputElement).value = value;
         }
         el.dispatchEvent(new Event("input", { bubbles: true }));
         el.dispatchEvent(new Event("change", { bubbles: true }));
       }
     });
-    console.log("Autofill Extension: All fields filled from profile", activeProfile);
+    console.log(
+      "Autofill Extension: All fields filled from profile",
+      activeProfileId,
+    );
   }
 }

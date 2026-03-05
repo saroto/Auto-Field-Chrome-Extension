@@ -178,14 +178,101 @@
     if (!labelText && input instanceof HTMLInputElement && input.placeholder) {
       labelText = input.placeholder;
     }
+    if ((type === "radio" || type === "checkbox") && input instanceof HTMLInputElement) {
+      let groupLabel = "";
+      let ancestor = input.parentElement;
+      while (ancestor && ancestor.tagName !== "FORM" && ancestor.tagName !== "BODY") {
+        if (ancestor.tagName === "FIELDSET") {
+          const legend = ancestor.querySelector("legend");
+          if (legend) {
+            groupLabel = legend.textContent?.trim() || "";
+          }
+          break;
+        }
+        ancestor = ancestor.parentElement;
+      }
+      if (!groupLabel) {
+        let el = input.parentElement;
+        while (el && el.tagName !== "FORM" && el.tagName !== "BODY") {
+          const labelledBy = el.getAttribute("aria-labelledby");
+          if (labelledBy) {
+            const target = document.getElementById(labelledBy);
+            if (target) {
+              groupLabel = target.textContent?.trim() || "";
+              break;
+            }
+          }
+          el = el.parentElement;
+        }
+      }
+      if (!groupLabel && input.name) {
+        groupLabel = input.name.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+      if (groupLabel) {
+        labelText = groupLabel;
+      }
+    }
     const placeholder = input instanceof HTMLInputElement ? input.placeholder || "" : "";
+    let options;
+    if (input instanceof HTMLSelectElement) {
+      options = Array.from(input.options).filter((o) => o.value !== "").map((o) => ({ value: o.value, label: o.text.trim() }));
+    } else if (type === "radio" && input.name) {
+      const radios = document.querySelectorAll(`input[type="radio"][name="${CSS.escape(input.name)}"]`);
+      options = Array.from(radios).map((r) => {
+        let radioLabel = r.value;
+        if (r.id) {
+          const lbl = document.querySelector(`label[for="${CSS.escape(r.id)}"]`);
+          if (lbl)
+            radioLabel = lbl.textContent?.trim() || r.value;
+        }
+        if (radioLabel === r.value) {
+          let parent = r.parentElement;
+          while (parent && parent.tagName !== "FORM" && parent.tagName !== "BODY") {
+            if (parent.tagName === "LABEL") {
+              const clone = parent.cloneNode(true);
+              clone.querySelector("input")?.remove();
+              radioLabel = clone.textContent?.trim() || r.value;
+              break;
+            }
+            parent = parent.parentElement;
+          }
+        }
+        return { value: r.value, label: radioLabel };
+      });
+    } else if (type === "checkbox" && input.name) {
+      const boxes = document.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(input.name)}"]`);
+      if (boxes.length > 1) {
+        options = Array.from(boxes).map((cb) => {
+          let cbLabel = cb.value;
+          if (cb.id) {
+            const lbl = document.querySelector(`label[for="${CSS.escape(cb.id)}"]`);
+            if (lbl)
+              cbLabel = lbl.textContent?.trim() || cb.value;
+          }
+          if (cbLabel === cb.value) {
+            let parent = cb.parentElement;
+            while (parent && parent.tagName !== "FORM" && parent.tagName !== "BODY") {
+              if (parent.tagName === "LABEL") {
+                const clone = parent.cloneNode(true);
+                clone.querySelector("input")?.remove();
+                cbLabel = clone.textContent?.trim() || cb.value;
+                break;
+              }
+              parent = parent.parentElement;
+            }
+          }
+          return { value: cb.value, label: cbLabel };
+        });
+      }
+    }
     return {
       id: input.id,
       name: nameAttr,
       type: type || "text",
       placeholder,
-      label: labelText || nameAttr
+      label: labelText || nameAttr,
       // fallback to nameAttr if no label found
+      ...options && { options }
     };
   }
   var init_fieldDetector = __esm({
@@ -196,9 +283,13 @@
   });
 
   // src/content/services/formFiller.js
-  async function fillAllFields(profile) {
+  async function fillAllFields(profileId) {
     const activeProfileData = await chrome.storage.sync.get("activeProfile");
-    const activeProfile = profile || activeProfileData.activeProfile || "Profile1";
+    const activeProfileId = profileId || activeProfileData.activeProfile || "";
+    if (!activeProfileId) {
+      console.warn("No active profile selected");
+      return;
+    }
     const allInputs = getAllInputs();
     const storageKeysToFetch = [];
     allInputs.forEach((el) => {
@@ -206,7 +297,7 @@
       if (!IGNORED_INPUT_TYPES.includes(type)) {
         const nameAttr = el.name || el.id;
         if (nameAttr) {
-          storageKeysToFetch.push(`${STORAGE_KEY_PREFIX}_${activeProfile}_${nameAttr}`);
+          storageKeysToFetch.push(`autofill_${activeProfileId}_${nameAttr}`);
         }
       }
     });
@@ -214,11 +305,16 @@
       const data = await chrome.storage.sync.get(storageKeysToFetch);
       allInputs.forEach((el) => {
         const nameAttr = el.name || el.id;
-        const storageKey = `${STORAGE_KEY_PREFIX}_${activeProfile}_${nameAttr}`;
-        if (nameAttr && data[storageKey]) {
+        const storageKey = `autofill_${activeProfileId}_${nameAttr}`;
+        if (nameAttr && data[storageKey] !== void 0) {
           const value = data[storageKey];
           if (el instanceof HTMLSelectElement) {
             el.value = value;
+          } else if (el instanceof HTMLInputElement && el.type === "radio") {
+            el.checked = el.value === value;
+          } else if (el instanceof HTMLInputElement && el.type === "checkbox") {
+            const checkedValues = value.split(",");
+            el.checked = checkedValues.includes(el.value) || value === "true";
           } else {
             el.value = value;
           }
@@ -226,7 +322,7 @@
           el.dispatchEvent(new Event("change", { bubbles: true }));
         }
       });
-      console.log("Autofill Extension: All fields filled from profile", activeProfile);
+      console.log("Autofill Extension: All fields filled from profile", activeProfileId);
     }
   }
   var init_formFiller = __esm({
@@ -446,9 +542,14 @@ Random ID: ${Math.random().toString(36).substring(2, 8)}`;
         if (request.action === "GET_FIELDS") {
           const allInputs = getAllInputs();
           const fields = [];
+          const seenNames = /* @__PURE__ */ new Set();
           allInputs.forEach((el) => {
             const fieldInfo = getFieldInfo(el);
             if (fieldInfo) {
+              if ((fieldInfo.type === "radio" || fieldInfo.type === "checkbox") && seenNames.has(fieldInfo.name)) {
+                return;
+              }
+              seenNames.add(fieldInfo.name);
               fields.push(fieldInfo);
             }
           });

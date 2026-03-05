@@ -14,6 +14,6 @@
       "all_frames": true
     }
   ],
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "tabs", "windows"],
   "host_permissions": ["<all_urls>"]
 }

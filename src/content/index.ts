@@ -69,26 +69,37 @@ document.addEventListener("keydown", handleKeyDown);
 /**
  * Handle messages from the popup
  */
-chrome.runtime.onMessage.addListener((request: ContentMessage, _sender, sendResponse) => {
-  if (request.action === "GET_FIELDS") {
-    const allInputs = fieldDetector.getAllInputs();
-    const fields: Field[] = [];
+chrome.runtime.onMessage.addListener(
+  (request: ContentMessage, _sender, sendResponse) => {
+    if (request.action === "GET_FIELDS") {
+      const allInputs = fieldDetector.getAllInputs();
+      const fields: Field[] = [];
+      const seenNames = new Set<string>();
 
-    allInputs.forEach((el) => {
-      const fieldInfo = fieldDetector.getFieldInfo(el);
-      if (fieldInfo) {
-        fields.push(fieldInfo);
-      }
-    });
+      allInputs.forEach((el) => {
+        const fieldInfo = fieldDetector.getFieldInfo(el);
+        if (fieldInfo) {
+          // Deduplicate radio/checkbox groups — multiple inputs share one name
+          if (
+            (fieldInfo.type === "radio" || fieldInfo.type === "checkbox") &&
+            seenNames.has(fieldInfo.name)
+          ) {
+            return;
+          }
+          seenNames.add(fieldInfo.name);
+          fields.push(fieldInfo);
+        }
+      });
 
-    sendResponse({ fields });
-  } else if (request.action === "FILL_ALL_FIELDS") {
-    formFiller.fillAllFields(request.profile).then(() => {
+      sendResponse({ fields });
+    } else if (request.action === "FILL_ALL_FIELDS") {
+      formFiller.fillAllFields(request.profile).then(() => {
+        sendResponse({ status: "success" });
+      });
+      return true; // Keep message channel open for async response
+    } else if (request.action === "MAGIC_FILL") {
+      magicFiller.magicFillAllFields();
       sendResponse({ status: "success" });
-    });
-    return true; // Keep message channel open for async response
-  } else if (request.action === "MAGIC_FILL") {
-    magicFiller.magicFillAllFields();
-    sendResponse({ status: "success" });
-  }
-});
+    }
+  },
+);

@@ -3,44 +3,149 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Auto Fill Settings</title>
+    <title>Auto Fill</title>
     <link rel="stylesheet" href="ui/popup.css" />
   </head>
   <body>
-    <h3>Autofill Data</h3>
+    <div class="popup-wrapper">
+      <!-- ── Sticky header with icon actions ── -->
+      <header class="app-header">
+        <div class="app-title">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          Auto Fill
+        </div>
+        <div class="header-actions">
+          <button
+            id="saveBtn"
+            class="icon-btn icon-btn--save"
+            title="Save &amp; Fill Form"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="9 11 12 14 22 4" />
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+            </svg>
+          </button>
+          <button
+            id="deleteProfileBtn"
+            class="icon-btn icon-btn--delete"
+            title="Delete Profile"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+              <path d="M9 6V4h6v2" />
+            </svg>
+          </button>
+          <button id="loadBtn" class="icon-btn" title="Reload Fields">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M23 4v6h-6" />
+              <path d="M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0114.97-2.14L23 10" />
+              <path d="M20.49 15a9 9 0 01-14.97 2.14L1 14" />
+            </svg>
+          </button>
+        </div>
+      </header>
 
-    <div class="profile-section">
-      <label for="profileSelect" class="profile-label">Profile:</label>
-      <select id="profileSelect">
-        <option value="Profile1">Profile 1 (Default)</option>
-        <option value="Profile2">Profile 2 (Alternative)</option>
-        <option value="Profile3">Profile 3 (Edge Cases)</option>
-      </select>
-    </div>
+      <div class="app-body">
+        <!-- Actions (top for quick access) -->
+        <div class="action-row">
+          <button id="magicFillBtn" class="btn btn--magic" style="flex: 1">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="flex-shrink: 0"
+            >
+              <path d="M15 4V2" />
+              <path d="M15 16v-2" />
+              <path d="M8 9h2" />
+              <path d="M20 9h2" />
+              <path d="M17.8 11.8L19 13" />
+              <path d="M15 9h0" />
+              <path d="M17.8 6.2L19 5" />
+              <path d="M3 21l9-9" />
+              <path d="M12.2 6.2L11 5" />
+            </svg>
+            Magic Fill
+          </button>
+        </div>
 
-    <div id="dynamicFieldsContainer">
-      <div class="message">Detecting fields on page...</div>
-    </div>
+        <!-- Profile Management -->
+        <div class="card">
+          <div class="profile-row">
+            <select id="profileSelect">
+              <option value="">-- Select Profile --</option>
+            </select>
+            <button id="newProfileBtn" class="btn btn--sm">+ New</button>
+          </div>
+          <div id="profileUrlInfo" class="url-badge">
+            <span class="url-tag">URL</span>
+            <span id="profileUrl" class="url-text">-</span>
+          </div>
+        </div>
 
-    <button id="loadBtn" style="background: #FF9800; margin-top: 15px;">
-      Load Fields
-    </button>
-    <button id="saveBtn">Save Settings</button>
-    <div id="status"></div>
+        <!-- Status -->
+        <div id="status"></div>
 
-    <hr />
+        <!-- Fields container -->
+        <div id="dynamicFieldsContainer" class="card fields-card">
+          <p class="placeholder-msg">Select or create a profile…</p>
+        </div>
 
-    <button id="fillAllBtn" style="background: #2196F3; margin-top: 10px;">
-      Fill All Fields (from Profile)
-    </button>
-    <button id="magicFillBtn" style="background: #9c27b0; margin-top: 10px;">
-      Magic Fill (Fake Data)
-    </button>
-
-    <hr />
-
-    <div class="field-count">
-      Fields detected on page: <strong id="fieldCount">...</strong>
+        <!-- Saved Profiles -->
+        <div class="card">
+          <p class="card-title">Saved Profiles</p>
+          <div id="allProfilesList" class="profiles-list">
+            <p class="placeholder-msg">No profiles saved yet.</p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="index.bundled.js"></script>
