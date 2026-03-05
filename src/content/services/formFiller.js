@@ -5,7 +5,7 @@ import { IGNORED_INPUT_TYPES } from "../../shared/constants.js";
  * Fill all fields with saved data from the active profile
  */
 export async function fillAllFields(profileId) {
-    const activeProfileData = await chrome.storage.sync.get("activeProfile");
+    const activeProfileData = await chrome.storage.local.get("activeProfile");
     const activeProfileId = profileId || activeProfileData.activeProfile || "";
     if (!activeProfileId) {
         console.warn("No active profile selected");
@@ -25,7 +25,7 @@ export async function fillAllFields(profileId) {
         }
     });
     if (storageKeysToFetch.length > 0) {
-        const data = await chrome.storage.sync.get(storageKeysToFetch);
+        const data = await chrome.storage.local.get(storageKeysToFetch);
         allInputs.forEach((el) => {
             const nameAttr = el.name || el.id;
             const storageKey = `autofill_${activeProfileId}_${nameAttr}`;

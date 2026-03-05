@@ -22,10 +22,10 @@ function createToggleButton() {
             console.warn("Autofill Extension: Active input has no name or id attribute.");
             return;
         }
-        const activeProfileData = await chrome.storage.sync.get("activeProfile");
+        const activeProfileData = await chrome.storage.local.get("activeProfile");
         const activeProfile = activeProfileData.activeProfile || "Profile1";
         const storageKey = `${STORAGE_KEY_PREFIX}_${activeProfile}_${nameAttr}`;
-        const data = await chrome.storage.sync.get(storageKey);
+        const data = await chrome.storage.local.get(storageKey);
         if (data[storageKey] !== undefined) {
             // Small timeout ensures the event loop processes this after any blur anomalies
             setTimeout(() => {
