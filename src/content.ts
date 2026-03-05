@@ -165,6 +165,172 @@ function getAllInputs(): (HTMLInputElement | HTMLTextAreaElement)[] {
   }
 }
 
+// Fill all fields with saved data from the active profile
+async function fillAllFields(profile?: string) {
+  const activeProfileData = await chrome.storage.sync.get("activeProfile");
+  const activeProfile = profile || activeProfileData.activeProfile || "Profile1";
+  const allInputs = getAllInputs();
+  const storageKeysToFetch: string[] = [];
+
+  allInputs.forEach((el) => {
+    const input = el as HTMLInputElement | HTMLTextAreaElement;
+    const type = input.type?.toLowerCase();
+    if (
+      ![
+        "hidden",
+        "submit",
+        "button",
+        "checkbox",
+        "radio",
+        "file",
+        "image",
+        "reset",
+      ].includes(type || "")
+    ) {
+      const nameAttr = input.name || input.id;
+      if (nameAttr) {
+        storageKeysToFetch.push(`autofill_${activeProfile}_${nameAttr}`);
+      }
+    }
+  });
+
+  if (storageKeysToFetch.length > 0) {
+    const data = await chrome.storage.sync.get(storageKeysToFetch);
+    allInputs.forEach((el) => {
+      const input = el as HTMLInputElement | HTMLTextAreaElement;
+      const nameAttr = input.name || input.id;
+      if (nameAttr && data[`autofill_${activeProfile}_${nameAttr}`]) {
+        input.value = data[`autofill_${activeProfile}_${nameAttr}`] as string;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+    console.log("Autofill Extension: All fields filled from profile", activeProfile);
+  }
+}
+
+// Fill all fields with random test data
+function magicFillAllFields() {
+  const allInputs = getAllInputs();
+  allInputs.forEach((el) => {
+    const input = el as HTMLInputElement | HTMLTextAreaElement;
+    const type = input.type?.toLowerCase();
+    if (
+      ![
+        "hidden",
+        "submit",
+        "button",
+        "checkbox",
+        "radio",
+        "file",
+        "image",
+        "reset",
+      ].includes(type || "")
+    ) {
+      const nameAttr = (
+        input.name ||
+        input.id ||
+        input.placeholder ||
+        "text"
+      ).toLowerCase();
+      let fakeData = "";
+
+      if (nameAttr.includes("email") || type === "email") {
+        fakeData = `testuser_${Math.floor(Math.random() * 10000)}@example.com`;
+      } else if (
+        nameAttr.includes("phone") ||
+        nameAttr.includes("tel") ||
+        type === "tel"
+      ) {
+        fakeData = `${Math.floor(100000 + Math.random() * 900000)}`;
+      } else if (
+        nameAttr.includes("first") ||
+        nameAttr.includes("fname") ||
+        nameAttr.includes("f_name")
+      ) {
+        const firsts = [
+          "Alex",
+          "Jordan",
+          "Taylor",
+          "Casey",
+          "Riley",
+          "Sam",
+          "Jamie",
+        ];
+        fakeData = firsts[Math.floor(Math.random() * firsts.length)] as string;
+      } else if (
+        nameAttr.includes("last") ||
+        nameAttr.includes("lname") ||
+        nameAttr.includes("l_name")
+      ) {
+        const lasts = ["Smith", "Doe", "Johnson", "Brown", "Miller", "Davis"];
+        fakeData = lasts[Math.floor(Math.random() * lasts.length)] as string;
+      } else if (nameAttr.includes("name")) {
+        fakeData = `Alex Doe`;
+      } else if (nameAttr.includes("company") || nameAttr.includes("org")) {
+        fakeData = `TestCorp Solutions Ltd`;
+      } else if (
+        nameAttr.includes("address") ||
+        nameAttr.includes("street")
+      ) {
+        fakeData = `${Math.floor(10 + Math.random() * 9990)} Main St`;
+      } else if (nameAttr.includes("city")) {
+        fakeData = `Metropolis`;
+      } else if (nameAttr.includes("zip") || nameAttr.includes("postal")) {
+        fakeData = `${Math.floor(10000 + Math.random() * 90000)}`;
+      } else if (nameAttr.includes("pass") || type === "password") {
+        fakeData = `TestPass123!`;
+      } else if (
+        input.tagName === "TEXTAREA" ||
+        nameAttr.includes("desc") ||
+        nameAttr.includes("msg") ||
+        nameAttr.includes("message")
+      ) {
+        fakeData = `This is some auto-generated test data for ${nameAttr}. It helps developers quickly test form submissions. \n\nRandom ID: ${Math.random().toString(36).substring(2, 8)}`;
+      } else if (type === "number") {
+        fakeData = `${Math.floor(1 + Math.random() * 100)}`;
+      } else if (type === "date") {
+        const d = new Date();
+        fakeData = d.toISOString().split("T")[0] as string;
+      } else {
+        // Generic fallback
+        fakeData = `Test-${Math.floor(Math.random() * 1000)}`;
+      }
+
+      input.value = fakeData;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+
+      // Visual feedback
+      const originalBg = input.style.backgroundColor;
+      input.style.backgroundColor = "#f3e5f5"; // light purple for magic fill
+      setTimeout(() => {
+        input.style.backgroundColor = originalBg;
+      }, 800);
+    }
+  });
+  console.log("Autofill Extension: Magic fill completed");
+}
+
+function handleKeyDown(event: KeyboardEvent) {
+  const isModKey = event.metaKey || event.ctrlKey; // Support Cmd on Mac and Ctrl on Windows/Linux
+  const isShift = event.shiftKey;
+
+  if (isModKey && event.key.toLowerCase() === "/") {
+    event.preventDefault();
+    // Trigger autofill action
+    fillAllFields();
+    console.log("Autofill Extension: Autofill shortcut triggered.");
+  } else if (isModKey && event.key === "\\") {
+    event.preventDefault();
+    // Trigger magic fill action
+    magicFillAllFields();
+    console.log("Autofill Extension: Magic fill shortcut triggered.");
+  }
+}
+
+document.addEventListener("keydown", handleKeyDown);
+
 // Handle messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "GET_FIELDS") {
@@ -274,153 +440,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     sendResponse({ fields });
   } else if (request.action === "FILL_ALL_FIELDS") {
-    const activeProfile = request.profile || "Profile1";
-    const allInputs = getAllInputs();
-    const storageKeysToFetch: string[] = [];
-
-    allInputs.forEach((el) => {
-      const input = el as HTMLInputElement | HTMLTextAreaElement;
-      const type = input.type?.toLowerCase();
-      if (
-        ![
-          "hidden",
-          "submit",
-          "button",
-          "checkbox",
-          "radio",
-          "file",
-          "image",
-          "reset",
-        ].includes(type || "")
-      ) {
-        const nameAttr = input.name || input.id;
-        if (nameAttr) {
-          storageKeysToFetch.push(`autofill_${activeProfile}_${nameAttr}`);
-        }
-      }
+    fillAllFields(request.profile).then(() => {
+      sendResponse({ status: "success" });
     });
-
-    if (storageKeysToFetch.length > 0) {
-      chrome.storage.sync.get(storageKeysToFetch, (data) => {
-        allInputs.forEach((el) => {
-          const input = el as HTMLInputElement | HTMLTextAreaElement;
-          const nameAttr = input.name || input.id;
-          if (nameAttr && data[`autofill_${activeProfile}_${nameAttr}`]) {
-            input.value = data[
-              `autofill_${activeProfile}_${nameAttr}`
-            ] as string;
-            input.dispatchEvent(new Event("input", { bubbles: true }));
-            input.dispatchEvent(new Event("change", { bubbles: true }));
-          }
-        });
-        sendResponse({ status: "success" });
-      });
-      return true; // Keep message channel open for async response
-    } else {
-      sendResponse({ status: "no fields found" });
-    }
+    return true; // Keep message channel open for async response
   } else if (request.action === "MAGIC_FILL") {
-    const allInputs = getAllInputs();
-    allInputs.forEach((el) => {
-      const input = el as HTMLInputElement | HTMLTextAreaElement;
-      const type = input.type?.toLowerCase();
-      if (
-        ![
-          "hidden",
-          "submit",
-          "button",
-          "checkbox",
-          "radio",
-          "file",
-          "image",
-          "reset",
-        ].includes(type || "")
-      ) {
-        const nameAttr = (
-          input.name ||
-          input.id ||
-          input.placeholder ||
-          "text"
-        ).toLowerCase();
-        let fakeData = "";
-
-        if (nameAttr.includes("email") || type === "email") {
-          fakeData = `testuser_${Math.floor(Math.random() * 10000)}@example.com`;
-        } else if (
-          nameAttr.includes("phone") ||
-          nameAttr.includes("tel") ||
-          type === "tel"
-        ) {
-          fakeData = `+1555${Math.floor(100000 + Math.random() * 900000)}`;
-        } else if (
-          nameAttr.includes("first") ||
-          nameAttr.includes("fname") ||
-          nameAttr.includes("f_name")
-        ) {
-          const firsts = [
-            "Alex",
-            "Jordan",
-            "Taylor",
-            "Casey",
-            "Riley",
-            "Sam",
-            "Jamie",
-          ];
-          fakeData = firsts[
-            Math.floor(Math.random() * firsts.length)
-          ] as string;
-        } else if (
-          nameAttr.includes("last") ||
-          nameAttr.includes("lname") ||
-          nameAttr.includes("l_name")
-        ) {
-          const lasts = ["Smith", "Doe", "Johnson", "Brown", "Miller", "Davis"];
-          fakeData = lasts[Math.floor(Math.random() * lasts.length)] as string;
-        } else if (nameAttr.includes("name")) {
-          fakeData = `Alex Doe`;
-        } else if (nameAttr.includes("company") || nameAttr.includes("org")) {
-          fakeData = `TestCorp Solutions Ltd`;
-        } else if (
-          nameAttr.includes("address") ||
-          nameAttr.includes("street")
-        ) {
-          fakeData = `${Math.floor(10 + Math.random() * 9990)} Main St`;
-        } else if (nameAttr.includes("city")) {
-          fakeData = `Metropolis`;
-        } else if (nameAttr.includes("zip") || nameAttr.includes("postal")) {
-          fakeData = `${Math.floor(10000 + Math.random() * 90000)}`;
-        } else if (nameAttr.includes("pass") || type === "password") {
-          fakeData = `TestPass123!`;
-        } else if (
-          input.tagName === "TEXTAREA" ||
-          nameAttr.includes("desc") ||
-          nameAttr.includes("msg") ||
-          nameAttr.includes("message")
-        ) {
-          fakeData = `This is some auto-generated test data for ${nameAttr}. It helps developers quickly test form submissions. \n\nRandom ID: ${Math.random().toString(36).substring(2, 8)}`;
-        } else if (type === "number") {
-          fakeData = `${Math.floor(1 + Math.random() * 100)}`;
-        } else if (type === "date") {
-          const d = new Date();
-          fakeData = d.toISOString().split("T")[0] as string;
-        } else {
-          // Generic fallback
-          fakeData = `Test-${Math.floor(Math.random() * 1000)}`;
-        }
-
-        input.value = fakeData;
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-
-        // Visual feedback
-        const originalBg = input.style.backgroundColor;
-        input.style.backgroundColor = "#f3e5f5"; // light purple for magic fill
-        setTimeout(() => {
-          input.style.backgroundColor = originalBg;
-        }, 800);
-      }
-    });
-
+    magicFillAllFields();
     sendResponse({ status: "success" });
   }
 });
