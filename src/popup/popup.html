@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto Fill Settings</title>
+    <link rel="stylesheet" href="ui/popup.css" />
+  </head>
+  <body>
+    <h3>Autofill Data</h3>
+
+    <div class="profile-section">
+      <label for="profileSelect" class="profile-label">Profile:</label>
+      <select id="profileSelect">
+        <option value="Profile1">Profile 1 (Default)</option>
+        <option value="Profile2">Profile 2 (Alternative)</option>
+        <option value="Profile3">Profile 3 (Edge Cases)</option>
+      </select>
+    </div>
+
+    <div id="dynamicFieldsContainer">
+      <div class="message">Detecting fields on page...</div>
+    </div>
+
+    <button id="loadBtn" style="background: #FF9800; margin-top: 15px;">
+      Load Fields
+    </button>
+    <button id="saveBtn">Save Settings</button>
+    <div id="status"></div>
+
+    <hr />
+
+    <button id="fillAllBtn" style="background: #2196F3; margin-top: 10px;">
+      Fill All Fields (from Profile)
+    </button>
+    <button id="magicFillBtn" style="background: #9c27b0; margin-top: 10px;">
+      Magic Fill (Fake Data)
+    </button>
+
+    <hr />
+
+    <div class="field-count">
+      Fields detected on page: <strong id="fieldCount">...</strong>
+    </div>
+
+    <script src="index.bundled.js"></script>
+  </body>
+</html>
