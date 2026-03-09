@@ -100,6 +100,7 @@ export function getAllInputs() {
  * Extract field information (label, name, type, etc.) from an input, textarea, or select element
  */
 export function getFieldInfo(input) {
+    const root = (input.getRootNode?.() || input.ownerDocument || document);
     const type = input instanceof HTMLSelectElement ? "select" : input.type?.toLowerCase();
     // Ignore certain input types
     if (IGNORED_INPUT_TYPES.includes(type)) {
@@ -110,7 +111,7 @@ export function getFieldInfo(input) {
     // Extract label BEFORE finalizing nameAttr to use it as a stable fallback
     // Case 1: <label for="inputId">
     if (input.id) {
-        const labelEl = document.querySelector(`label[for="${CSS.escape(input.id)}"]`);
+        const labelEl = root.querySelector(`label[for="${CSS.escape(input.id)}"]`);
         if (labelEl && labelEl.textContent) {
             labelText = labelEl.textContent.trim();
         }
@@ -218,10 +219,15 @@ export function getFieldInfo(input) {
             while (el && el.tagName !== "FORM" && el.tagName !== "BODY") {
                 const labelledBy = el.getAttribute("aria-labelledby");
                 if (labelledBy) {
-                    const target = document.getElementById(labelledBy);
-                    if (target) {
-                        groupLabel = target.textContent?.trim() || "";
-                        break;
+                    try {
+                        const target = root.querySelector(`#${CSS.escape(labelledBy)}`);
+                        if (target) {
+                            groupLabel = target.textContent?.trim() || "";
+                            break;
+                        }
+                    }
+                    catch (e) {
+                        // Ignore invalid selectors
                     }
                 }
                 el = el.parentElement;
@@ -247,11 +253,11 @@ export function getFieldInfo(input) {
             .map((o) => ({ value: o.value, label: o.text.trim() }));
     }
     else if (type === "radio" && input.name) {
-        const radios = document.querySelectorAll(`input[type="radio"][name="${CSS.escape(input.name)}"]`);
+        const radios = root.querySelectorAll(`input[type="radio"][name="${CSS.escape(input.name)}"]`);
         options = Array.from(radios).map((r) => {
             let radioLabel = r.value;
             if (r.id) {
-                const lbl = document.querySelector(`label[for="${CSS.escape(r.id)}"]`);
+                const lbl = root.querySelector(`label[for="${CSS.escape(r.id)}"]`);
                 if (lbl)
                     radioLabel = lbl.textContent?.trim() || r.value;
             }
@@ -273,12 +279,12 @@ export function getFieldInfo(input) {
         });
     }
     else if (type === "checkbox" && input.name) {
-        const boxes = document.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(input.name)}"]`);
+        const boxes = root.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(input.name)}"]`);
         if (boxes.length > 1) {
             options = Array.from(boxes).map((cb) => {
                 let cbLabel = cb.value;
                 if (cb.id) {
-                    const lbl = document.querySelector(`label[for="${CSS.escape(cb.id)}"]`);
+                    const lbl = root.querySelector(`label[for="${CSS.escape(cb.id)}"]`);
                     if (lbl)
                         cbLabel = lbl.textContent?.trim() || cb.value;
                 }

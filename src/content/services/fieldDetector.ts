@@ -136,6 +136,9 @@ export function getAllInputs(): (
 export function getFieldInfo(
   input: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement,
 ): Field | null {
+  const root = (input.getRootNode?.() || input.ownerDocument || document) as
+    | Document
+    | DocumentFragment;
   const type =
     input instanceof HTMLSelectElement ? "select" : input.type?.toLowerCase();
 
@@ -151,9 +154,7 @@ export function getFieldInfo(
 
   // Case 1: <label for="inputId">
   if (input.id) {
-    const labelEl = document.querySelector(
-      `label[for="${CSS.escape(input.id)}"]`,
-    );
+    const labelEl = root.querySelector(`label[for="${CSS.escape(input.id)}"]`);
     if (labelEl && labelEl.textContent) {
       labelText = labelEl.textContent.trim();
     }
@@ -280,10 +281,14 @@ export function getFieldInfo(
       while (el && el.tagName !== "FORM" && el.tagName !== "BODY") {
         const labelledBy = el.getAttribute("aria-labelledby");
         if (labelledBy) {
-          const target = document.getElementById(labelledBy);
-          if (target) {
-            groupLabel = target.textContent?.trim() || "";
-            break;
+          try {
+            const target = root.querySelector(`#${CSS.escape(labelledBy)}`);
+            if (target) {
+              groupLabel = target.textContent?.trim() || "";
+              break;
+            }
+          } catch (e) {
+            // Ignore invalid selectors
           }
         }
         el = el.parentElement;
@@ -314,13 +319,13 @@ export function getFieldInfo(
       .filter((o) => o.value !== "")
       .map((o) => ({ value: o.value, label: o.text.trim() }));
   } else if (type === "radio" && input.name) {
-    const radios = document.querySelectorAll<HTMLInputElement>(
+    const radios = root.querySelectorAll<HTMLInputElement>(
       `input[type="radio"][name="${CSS.escape(input.name)}"]`,
     );
     options = Array.from(radios).map((r) => {
       let radioLabel = r.value;
       if (r.id) {
-        const lbl = document.querySelector(`label[for="${CSS.escape(r.id)}"]`);
+        const lbl = root.querySelector(`label[for="${CSS.escape(r.id)}"]`);
         if (lbl) radioLabel = lbl.textContent?.trim() || r.value;
       }
       if (radioLabel === r.value) {
@@ -342,16 +347,14 @@ export function getFieldInfo(
       return { value: r.value, label: radioLabel };
     });
   } else if (type === "checkbox" && input.name) {
-    const boxes = document.querySelectorAll<HTMLInputElement>(
+    const boxes = root.querySelectorAll<HTMLInputElement>(
       `input[type="checkbox"][name="${CSS.escape(input.name)}"]`,
     );
     if (boxes.length > 1) {
       options = Array.from(boxes).map((cb) => {
         let cbLabel = cb.value;
         if (cb.id) {
-          const lbl = document.querySelector(
-            `label[for="${CSS.escape(cb.id)}"]`,
-          );
+          const lbl = root.querySelector(`label[for="${CSS.escape(cb.id)}"]`);
           if (lbl) cbLabel = lbl.textContent?.trim() || cb.value;
         }
         if (cbLabel === cb.value) {
