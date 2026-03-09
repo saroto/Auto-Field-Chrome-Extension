@@ -1,4 +1,47 @@
 // src/content/services/fieldDetector.ts
+/**
+ * Check if an element is visible to the user.
+ * This is crucial for avoiding inactive tabs (like tab=0 when we're on tab=1)
+ */
+function isElementVisible(el) {
+    if (el instanceof HTMLInputElement &&
+        (el.type === "hidden" || el.style.display === "none")) {
+        return false;
+    }
+    // Check dimensions (this usually catches display:none on wrappers/tabs)
+    if (el.offsetWidth === 0 || el.offsetHeight === 0) {
+        // If it's a hidden input, allow width/height 0, otherwise it's genuinely hidden
+        if (el instanceof HTMLInputElement && el.type === "hidden") {
+            return false;
+        }
+        // Also consider elements with 0 opacity as hidden
+        const style = window.getComputedStyle(el);
+        if (style.opacity === "0" ||
+            style.visibility === "hidden" ||
+            style.display === "none") {
+            return false;
+        }
+    }
+    // Double check computed style
+    const computedStyle = window.getComputedStyle(el);
+    if (computedStyle.display === "none" ||
+        computedStyle.visibility === "hidden" ||
+        computedStyle.opacity === "0") {
+        return false;
+    }
+    // Also check parents up to the body
+    let parent = el.parentElement;
+    while (parent && parent.tagName !== "BODY") {
+        const parentStyle = window.getComputedStyle(parent);
+        if (parentStyle.display === "none" ||
+            parentStyle.visibility === "hidden" ||
+            parentStyle.opacity === "0") {
+            return false;
+        }
+        parent = parent.parentElement;
+    }
+    return true;
+}
 import { IGNORED_INPUT_TYPES } from "../../shared/constants.js";
 /**
  * Find all inputs, textareas, and selects in the document, piercing through Shadow DOM and iframes
@@ -17,7 +60,8 @@ export function getAllInputs() {
             if (node instanceof HTMLElement &&
                 (node.tagName === "INPUT" ||
                     node.tagName === "TEXTAREA" ||
-                    node.tagName === "SELECT")) {
+                    node.tagName === "SELECT") &&
+                isElementVisible(node)) {
                 inputs.push(node);
             }
             // Handle iframes - try to access their content
@@ -49,7 +93,7 @@ export function getAllInputs() {
         console.error("Autofill Extension: Error traversing DOM for inputs.", err);
         // Fallback if the traversal somehow fails
         const fallbackInputs = document.querySelectorAll("input, textarea, select");
-        return Array.from(fallbackInputs);
+        return Array.from(fallbackInputs).filter((el) => el instanceof HTMLElement && isElementVisible(el));
     }
 }
 /**
@@ -61,28 +105,9 @@ export function getFieldInfo(input) {
     if (IGNORED_INPUT_TYPES.includes(type)) {
         return null;
     }
-    // Determine a unique identifier or name for the field
-    let nameAttr = input.name || input.id;
-    if (!nameAttr) {
-        // Fallback to placeholder or aria-label
-        const fallback = (input instanceof HTMLInputElement && input.placeholder) ||
-            input.getAttribute("aria-label");
-        if (fallback) {
-            nameAttr = "gen_" + fallback.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
-            // Assign this to the input id so we can find it later
-            input.id = nameAttr;
-        }
-        else {
-            // Absolute fallback: generate a random but somewhat stable ID
-            nameAttr = "autofill_gen_" + Math.random().toString(36).substring(2, 9);
-            input.id = nameAttr;
-        }
-    }
-    if (!nameAttr) {
-        return null;
-    }
-    // Try to find an associated label
+    let rawNameAttr = input.name || input.id;
     let labelText = "";
+    // Extract label BEFORE finalizing nameAttr to use it as a stable fallback
     // Case 1: <label for="inputId">
     if (input.id) {
         const labelEl = document.querySelector(`label[for="${CSS.escape(input.id)}"]`);
@@ -95,7 +120,6 @@ export function getFieldInfo(input) {
         let parent = input.parentElement;
         while (parent && parent.tagName !== "FORM" && parent.tagName !== "BODY") {
             if (parent.tagName === "LABEL") {
-                // Clone the label to remove the input's text content from the extracted string
                 const clone = parent.cloneNode(true);
                 const inputInClone = clone.querySelector("input, textarea, select");
                 if (inputInClone) {
@@ -116,7 +140,59 @@ export function getFieldInfo(input) {
     if (!labelText && input instanceof HTMLInputElement && input.placeholder) {
         labelText = input.placeholder;
     }
-    // Case 4 (radio/checkbox groups only): find the group-level label, not
+    // Case 4: intelligent nearby fallback
+    if (!labelText) {
+        let parent = input.parentElement;
+        let depth = 0;
+        while (parent &&
+            parent.tagName !== "FORM" &&
+            parent.tagName !== "BODY" &&
+            depth < 3) {
+            const labelsInContainer = Array.from(parent.querySelectorAll("label"));
+            if (labelsInContainer.length === 1 && labelsInContainer[0]?.textContent) {
+                labelText = labelsInContainer[0].textContent.trim();
+                break;
+            }
+            if (parent.previousElementSibling) {
+                const prev = parent.previousElementSibling;
+                if (prev.tagName === "LABEL" && prev.textContent) {
+                    labelText = prev.textContent.trim();
+                    break;
+                }
+                if ("querySelector" in prev &&
+                    typeof prev.querySelector === "function") {
+                    const labelInPrev = prev.querySelector("label");
+                    if (labelInPrev && labelInPrev.textContent) {
+                        labelText = labelInPrev.textContent.trim();
+                        break;
+                    }
+                }
+            }
+            parent = parent.parentElement;
+            depth++;
+        }
+    }
+    // Clean up extracted label text early so it can be used for ID generation
+    if (labelText) {
+        labelText = labelText.replace(/[:*]\s*$/g, "").trim();
+    }
+    // Finalize nameAttr with stable fallback
+    let nameAttr = rawNameAttr;
+    if (!nameAttr) {
+        if (labelText) {
+            nameAttr = "gen_" + labelText.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+        }
+        else {
+            // Very last resort, still potentially unstable but rare if label exists
+            nameAttr =
+                "autofill_gen_unknown_" + Math.random().toString(36).substring(2, 6);
+        }
+        input.id = nameAttr;
+    }
+    if (!nameAttr) {
+        return null;
+    }
+    // Case 5 (radio/checkbox groups only): find the group-level label, not
     // the individual option label.  Priority: <fieldset><legend>, then an
     // aria-labelledby target, then humanise the name attribute.
     if ((type === "radio" || type === "checkbox") &&
@@ -224,6 +300,11 @@ export function getFieldInfo(input) {
             });
         }
     }
+    // Clean up extracted label text
+    if (labelText) {
+        // Remove trailing colons, asterisks, and extra whitespace, e.g., "First Name: *" -> "First Name"
+        labelText = labelText.replace(/[:*]\s*$/g, "").trim();
+    }
     return {
         id: input.id,
         name: nameAttr,
@@ -233,4 +314,3 @@ export function getFieldInfo(input) {
         ...(options && { options }),
     };
 }
-//# sourceMappingURL=fieldDetector.js.map

@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsc --watch",
     "build": "tsc && npm run bundle",
-    "bundle": "esbuild src/content/index.js --bundle --format=iife --outfile=src/content/index.bundled.js && esbuild src/popup/index.js --bundle --format=iife --outfile=src/popup/index.bundled.js"
+    "bundle": "esbuild src/content/index.js --bundle --minify --format=iife --outfile=src/content/index.bundled.js && esbuild src/popup/index.js --bundle --minify --format=iife --outfile=src/popup/index.bundled.js"
   },
   "keywords": [],
   "author": "",

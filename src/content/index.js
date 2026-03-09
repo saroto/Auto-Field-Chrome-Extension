@@ -86,4 +86,3 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         sendResponse({ status: "success" });
     }
 });
-//# sourceMappingURL=index.js.map

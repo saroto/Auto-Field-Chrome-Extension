@@ -6,6 +6,7 @@ export const IGNORED_INPUT_TYPES = [
   "file",
   "image",
   "reset",
+  "hidden",
 ] as const;
 
 export const MAGIC_FILL_BG_COLOR = "#f3e5f5";

@@ -205,4 +205,3 @@ export function magicFillAllFields() {
     });
     console.log("Autofill Extension: Magic fill completed");
 }
-//# sourceMappingURL=magicFiller.js.map
