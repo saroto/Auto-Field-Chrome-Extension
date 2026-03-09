@@ -31,6 +31,10 @@ export async function fillAllFields(profileId) {
             const storageKey = `autofill_${activeProfileId}_${nameAttr}`;
             if (nameAttr && data[storageKey] !== undefined) {
                 const value = data[storageKey];
+                // Skip filling if the profile has no saved data for this field.
+                // This prevents overwriting user's manually typed data with empty strings.
+                if (value === "")
+                    return;
                 if (el instanceof HTMLSelectElement) {
                     el.value = value;
                 }
@@ -52,4 +56,3 @@ export async function fillAllFields(profileId) {
         console.log("Autofill Extension: All fields filled from profile", activeProfileId);
     }
 }
-//# sourceMappingURL=formFiller.js.map

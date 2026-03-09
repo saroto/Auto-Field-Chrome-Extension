@@ -186,4 +186,3 @@ export function renderFields(fields, container) {
         container.appendChild(wrapper);
     });
 }
-//# sourceMappingURL=fieldRenderer.js.map

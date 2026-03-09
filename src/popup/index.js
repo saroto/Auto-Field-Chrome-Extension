@@ -268,24 +268,24 @@ document.addEventListener("DOMContentLoaded", async () => {
                 field.options &&
                 field.options.length > 1) {
                 // Checkbox group: collect checked values as comma-separated string
-                const checkboxes = container.querySelectorAll(`[data-group="${field.name}"]`);
+                const checkboxes = container.querySelectorAll(`[data-group="${CSS.escape(field.name)}"]`);
                 const checked = Array.from(checkboxes)
                     .filter((cb) => cb.checked)
                     .map((cb) => cb.dataset.value ?? "");
                 fieldValues[field.name] = checked.join(",");
             }
             else if (field.type === "checkbox") {
-                const inputEl = document.getElementById(`input_${field.name}`);
+                const inputEl = document.getElementById(`input_${CSS.escape(field.name)}`);
                 if (inputEl)
                     fieldValues[field.name] = String(inputEl.checked);
             }
             else if (field.type === "radio") {
                 // Radio group: get the checked radio's value
-                const checked = container.querySelector(`[data-group="${field.name}"]:checked`);
+                const checked = container.querySelector(`[data-group="${CSS.escape(field.name)}"]:checked`);
                 fieldValues[field.name] = checked?.dataset.value ?? "";
             }
             else {
-                const inputEl = document.getElementById(`input_${field.name}`);
+                const inputEl = document.getElementById(`input_${CSS.escape(field.name)}`);
                 if (inputEl)
                     fieldValues[field.name] = inputEl.value;
             }
@@ -314,4 +314,3 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 });
-//# sourceMappingURL=index.js.map

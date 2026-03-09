@@ -213,4 +213,3 @@ export async function getActiveProfile() {
 export async function setActiveProfile(profile) {
     return saveFieldData({ activeProfile: profile });
 }
-//# sourceMappingURL=popupService.js.map

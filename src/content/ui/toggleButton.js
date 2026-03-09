@@ -68,4 +68,3 @@ export function hide() {
         activeInput = null;
     }
 }
-//# sourceMappingURL=toggleButton.js.map

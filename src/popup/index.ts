@@ -336,7 +336,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ) {
         // Checkbox group: collect checked values as comma-separated string
         const checkboxes = container.querySelectorAll<HTMLInputElement>(
-          `[data-group="${field.name}"]`,
+          `[data-group="${CSS.escape(field.name)}"]`,
         );
         const checked = Array.from(checkboxes)
           .filter((cb) => cb.checked)
@@ -344,18 +344,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         fieldValues[field.name] = checked.join(",");
       } else if (field.type === "checkbox") {
         const inputEl = document.getElementById(
-          `input_${field.name}`,
+          `input_${CSS.escape(field.name)}`,
         ) as HTMLInputElement;
         if (inputEl) fieldValues[field.name] = String(inputEl.checked);
       } else if (field.type === "radio") {
         // Radio group: get the checked radio's value
         const checked = container.querySelector<HTMLInputElement>(
-          `[data-group="${field.name}"]:checked`,
+          `[data-group="${CSS.escape(field.name)}"]:checked`,
         );
         fieldValues[field.name] = checked?.dataset.value ?? "";
       } else {
         const inputEl = document.getElementById(
-          `input_${field.name}`,
+          `input_${CSS.escape(field.name)}`,
         ) as HTMLInputElement;
         if (inputEl) fieldValues[field.name] = inputEl.value;
       }
