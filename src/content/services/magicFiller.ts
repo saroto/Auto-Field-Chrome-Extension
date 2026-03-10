@@ -145,7 +145,7 @@ export function magicFillAllFields(): void {
             Math.floor(Math.random() * name_km.length)
           ] as string;
           break;
-        case nameAttr.includes("company") || nameAttr.includes("companyNameKm") || nameAttr.includes("org"):
+        case nameAttr.includes("company") || nameAttr.includes("companyNameKm") || nameAttr.includes("org"): {
           const company_name_kh = [
             "ធនាគារ អេស៊ីលីដា",
             "ធនាគារ កាណាឌីយ៉ា",
@@ -172,7 +172,8 @@ export function magicFillAllFields(): void {
             Math.floor(Math.random() * company_name_kh.length)
           ] as string;
           break;
-        case nameAttr.includes("company") || nameAttr.includes("org") || nameAttr.includes("companyNameEn"):
+        }
+        case nameAttr.includes("companyNameEn") || nameAttr.includes("companyEn"): {
           const company_name_en = [
             "ABA Bank",
             "Smart Axiata",
@@ -199,6 +200,7 @@ export function magicFillAllFields(): void {
             Math.floor(Math.random() * company_name_en.length)
           ] as string;
           break;
+        }
         case nameAttr.includes("name"):
           fakeData = `Alex Doe`;
           break;
