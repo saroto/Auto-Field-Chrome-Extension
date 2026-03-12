@@ -11,3 +11,107 @@ export const IGNORED_INPUT_TYPES = [
 
 export const MAGIC_FILL_BG_COLOR = "#f3e5f5";
 export const STORAGE_KEY_PREFIX = "autofill";
+
+export const COMPANY_NAME_KH = [
+  "ធនាគារ អេស៊ីលីដា",
+  "ធនាគារ កាណាឌីយ៉ា",
+  "ក្រុមហ៊ុន ជីប ម៉ុង",
+  "ក្រុមហ៊ុន រ៉ូយ៉ាល់ គ្រុប",
+  "ធនាគារ វឌ្ឍនៈ",
+  "ក្រុមហ៊ុន សែលកាត",
+  "ធនាគារ វីង",
+  "ធនាគារ អេប៊ីអេ (ABA)",
+  "ក្រុមហ៊ុន ខ្មែរ ប៊ែវើរីជីស",
+  "រោងចក្រស្រាបៀរ កម្ពុជា",
+  "កំពង់ផែស្វយ័តក្រុងព្រះសីហនុ",
+  "រដ្ឋាករទឹកស្វយ័តក្រុងភ្នំពេញ",
+  "ក្រុមហ៊ុន អុីហ្សុីខម (EZECOM)",
+  "ក្រុមហ៊ុន ភេសជ្ជៈកម្ពុជា (Coca-Cola)",
+  "ធនាគារ ហត្ថា",
+  "ក្រុមហ៊ុន សូគីម៉ិច",
+  "ក្រុមហ៊ុន ហ្គ្រេនធ្វីន អ៊ិនធើណេសិនណល",
+  "ក្រុមហ៊ុន ម៉េងលី ជេ. គួច អប់រំ",
+  "សហគ្រាសផលិតទឹកស្អាតកម្ពុជា",
+  "ក្រុមហ៊ុន បុរី ភ្នំពេញថ្មី",
+];
+
+export const COMPANY_NAME_EN = [
+  "ABA Bank",
+  "Smart Axiata",
+  "Cellcard",
+  "Canadia Bank",
+  "Chip Mong Group",
+  "Royal Group",
+  "EZECOM",
+  "Prasac Microfinance",
+  "Sathapana Bank",
+  "Wing Bank",
+  "Nexus Tech Solutions",
+  "Quantum Digital Academy",
+  "Apex Global Consulting",
+  "Vanguard Software Group",
+  "Sterling Financial Services",
+  "Blue Horizon Ventures",
+  "Summit Education Center",
+  "Pinnacle Creative Agency",
+  "Ironclad Cybersecurity",
+  "Velocity Logistics",
+];
+
+export const NAME_KH = [
+  "សេរី",
+  "វិជ្ជា",
+  "សុវណ្ណ",
+  "រិទ្ធី",
+  "ណារិទ្ធ",
+  "បុរី",
+  "វិសាល",
+  "ដារារិទ្ធ",
+  "ឧត្តម",
+  "ភារុណ",
+  "បុប្ផា",
+  "ស្រីនាង",
+  "កល្យាណ",
+  "ទេវី",
+  "ឆវី",
+  "នារី",
+  "លក្ខិណា",
+  "សុរិយ័ន",
+  "ចំរើន",
+  "វណ្ណារី",
+];
+
+export const LAST_NAME_EN = ["Smith", "Doe", "Johnson", "Brown", "Miller", "Davis"];
+
+export const FIRST_NAME_EN = [
+            "Alex",
+            "Jordan",
+            "Taylor",
+            "Casey",
+            "Riley",
+            "Sam",
+            "Jamie",
+          ];
+
+  export const EMAIL = [
+  "alex.rivera@gmail.com",
+  "sarah.j.smith@outlook.com",
+  "m.chen.dev@yahoo.com",
+  "jordan.taylor92@icloud.com",
+  "claire.vanderbilt@protonmail.com",
+  "root@localhost.dev",
+  "test-user-01@sandbox.io",
+  "admin@company-portal.net",
+  "api.tester@endpoint.solutions",
+  "bug_hunter@qa-triage.com",
+  "constantine.alexander.maximilian@university-records.edu",
+  "bobby.tables-drop-database@security-audit.org",
+  "info-department-west-region-04@global-logistics-corp.biz",
+  "user.name+extra.tag.123@subdomain.provider.co.uk",
+  "k.seang.dev.testing.account@internal-workflow.systems",
+  "a@b.com",
+  "dev@me.io",
+  "hi@xyz.net",
+  "test@123.org",
+  "go@run.dev"
+];
