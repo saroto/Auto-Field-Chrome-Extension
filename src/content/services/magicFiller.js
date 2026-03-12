@@ -38,8 +38,7 @@ function resolveValue(el, nameAttr, type) {
     if (type === "date") {
         return new Date().toISOString().split("T")[0];
     }
-    if (nameAttr.includes("businessRegistrationNumber")) {
-        console.log("Generating business registration number for field:", nameAttr);
+    if (nameAttr.includes("businessregistrationnumber")) {
         return (Math.floor(100000000 + Math.random() * 900000000)).toString();
     }
     // Name variants — order matters: more-specific checks before generic "name"
@@ -101,7 +100,7 @@ export function magicFillAllFields() {
         if (type === "radio") {
             const groupKey = `radio::${input.name}`;
             if (processedGroups.has(groupKey))
-                continue; // already handled this group
+                continue; // already handled this group  
             processedGroups.add(groupKey);
             const radios = Array.from(document.querySelectorAll(`input[type="radio"][name="${input.name}"]`));
             const chosen = pick(radios);
@@ -110,7 +109,7 @@ export function magicFillAllFields() {
             flashField(chosen);
             continue;
         }
-        // ── Checkbox ─────────────────────────────────────────────────────────────
+        // ── Checkbox ─────────────────────────────────────────────────────────────  
         if (type === "checkbox") {
             const groupKey = `checkbox::${input.name}`;
             if (input.name && processedGroups.has(groupKey))
@@ -121,12 +120,19 @@ export function magicFillAllFields() {
                 ? Array.from(document.querySelectorAll(`input[type="checkbox"][name="${input.name}"]`))
                 : [input];
             // Uncheck all, then randomly check 25–75 %
-            boxes.forEach((cb) => { cb.checked = false; });
+            boxes.forEach((cb) => {
+                if (cb.checked) {
+                    cb.checked = false;
+                    triggerEvents(cb);
+                }
+            });
             const numToCheck = Math.max(1, Math.floor(boxes.length * (0.25 + Math.random() * 0.5)));
             const shuffled = [...boxes].sort(() => Math.random() - 0.5);
             shuffled.slice(0, numToCheck).forEach((cb) => {
-                cb.checked = true;
-                triggerEvents(cb);
+                if (!cb.checked) {
+                    cb.checked = true;
+                    triggerEvents(cb);
+                }
                 flashField(cb);
             });
             continue;
