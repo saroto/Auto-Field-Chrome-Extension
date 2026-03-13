@@ -9,7 +9,7 @@ function applySelectStyles(el) {
     el.style.fontSize = "12.5px";
     el.style.color = "#374151";
     el.style.background = "#f8fafc";
-    el.style.fontFamily = "inherit";
+    el.style.fontFamily = "kantumruy pro";
 }
 function applyInputStyles(el) {
     el.style.width = "100%";
@@ -21,7 +21,7 @@ function applyInputStyles(el) {
     el.style.fontSize = "12.5px";
     el.style.color = "#374151";
     el.style.background = "#f8fafc";
-    el.style.fontFamily = "inherit";
+    el.style.fontFamily = "kantumruy pro";
 }
 function makeFieldLabel(text) {
     const label = document.createElement("label");
@@ -33,6 +33,7 @@ function makeFieldLabel(text) {
     label.style.fontWeight = "700";
     label.style.textTransform = "uppercase";
     label.style.letterSpacing = "0.5px";
+    label.style.fontFamily = "kantumruy pro";
     return label;
 }
 /**

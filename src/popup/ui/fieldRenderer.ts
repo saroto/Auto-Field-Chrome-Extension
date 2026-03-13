@@ -12,7 +12,7 @@ function applySelectStyles(el: HTMLSelectElement) {
   el.style.fontSize = "12.5px";
   el.style.color = "#374151";
   el.style.background = "#f8fafc";
-  el.style.fontFamily = "inherit";
+  el.style.fontFamily = "kantumruy pro";
 }
 
 function applyInputStyles(el: HTMLInputElement) {
@@ -25,7 +25,7 @@ function applyInputStyles(el: HTMLInputElement) {
   el.style.fontSize = "12.5px";
   el.style.color = "#374151";
   el.style.background = "#f8fafc";
-  el.style.fontFamily = "inherit";
+  el.style.fontFamily = "kantumruy pro";
 }
 
 function makeFieldLabel(text: string): HTMLLabelElement {
@@ -38,6 +38,7 @@ function makeFieldLabel(text: string): HTMLLabelElement {
   label.style.fontWeight = "700";
   label.style.textTransform = "uppercase";
   label.style.letterSpacing = "0.5px";
+  label.style.fontFamily ="kantumruy pro";
   return label;
 }
 
