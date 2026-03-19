@@ -1,6 +1,6 @@
 // src/popup/services/popupService.ts
 
-import { Field, Profile, ProfileData } from "../../shared/types.js";
+import { ContentMessage, Field, Profile, ProfileData } from "../../shared/types.js";
 
 /**
  * Get the currently active tab.
@@ -50,7 +50,7 @@ export async function getCurrentTabUrl(): Promise<string> {
  */
 export async function sendMessageToTab<T>(
   tabId: number,
-  message: any,
+  message: ContentMessage,
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     chrome.tabs.sendMessage(tabId, message, (response) => {
@@ -253,4 +253,47 @@ export async function getActiveProfile(): Promise<string> {
  */
 export async function setActiveProfile(profile: string): Promise<void> {
   return saveFieldData({ activeProfile: profile });
+}
+
+/**
+ * Export all profiles and their field values as a JSON object
+ */
+export async function exportAllData(): Promise<Record<string, unknown>> {
+  const profiles = await getAllProfiles();
+  const allData = await new Promise<Record<string, unknown>>((resolve) => {
+    chrome.storage.local.get(null, resolve);
+  });
+
+  const fieldValues: Record<string, string> = {};
+  for (const key in allData) {
+    if (key.startsWith("autofill_")) {
+      fieldValues[key] = allData[key] as string;
+    }
+  }
+
+  return { profiles, fieldValues };
+}
+
+/**
+ * Import profiles and field values from exported JSON
+ */
+export async function importAllData(
+  data: Record<string, unknown>,
+): Promise<number> {
+  const profiles = data.profiles as ProfileData | undefined;
+  const fieldValues = data.fieldValues as Record<string, string> | undefined;
+
+  if (!profiles || typeof profiles !== "object") {
+    throw new Error("Invalid import data: missing profiles");
+  }
+
+  const existingProfiles = await getAllProfiles();
+  const merged = { ...existingProfiles, ...profiles };
+  await saveAllProfiles(merged);
+
+  if (fieldValues && typeof fieldValues === "object") {
+    await saveFieldData(fieldValues);
+  }
+
+  return Object.keys(profiles).length;
 }

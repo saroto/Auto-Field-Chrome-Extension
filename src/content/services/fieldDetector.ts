@@ -72,12 +72,12 @@ export function getAllInputs(): (
       | HTMLSelectElement
     )[] = [];
     const queue: (Document | ShadowRoot | Element)[] = [document];
-    const visited = new Set<Document | ShadowRoot>();
+    const visited = new Set<Document | ShadowRoot | Element>();
 
     while (queue.length > 0) {
       const node = queue.shift();
-      if (!node || visited.has(node as any)) continue;
-      visited.add(node as any);
+      if (!node || visited.has(node)) continue;
+      visited.add(node);
 
       // Check if it's an input, textarea, or select
       if (
@@ -143,7 +143,7 @@ export function getFieldInfo(
     input instanceof HTMLSelectElement ? "select" : input.type?.toLowerCase();
 
   // Ignore certain input types
-  if (IGNORED_INPUT_TYPES.includes(type as any)) {
+  if (IGNORED_INPUT_TYPES.includes(type)) {
     return null;
   }
 

@@ -33,6 +33,7 @@
             id="saveBtn"
             class="icon-btn icon-btn--save"
             title="Save &amp; Fill Form"
+            aria-label="Save and fill form"
           >
             <svg
               width="14"
@@ -52,6 +53,7 @@
             id="deleteProfileBtn"
             class="icon-btn icon-btn--delete"
             title="Delete Profile"
+            aria-label="Delete profile"
           >
             <svg
               width="14"
@@ -70,7 +72,7 @@
               <path d="M9 6V4h6v2" />
             </svg>
           </button>
-          <button id="loadBtn" class="icon-btn" title="Reload Fields">
+          <button id="loadBtn" class="icon-btn" title="Reload Fields" aria-label="Reload fields">
             <svg
               width="14"
               height="14"
@@ -147,6 +149,20 @@
           <div id="allProfilesList" class="profiles-list">
             <p class="placeholder-msg">No profiles saved yet.</p>
           </div>
+        </div>
+
+        <!-- Import / Export -->
+        <div class="action-row">
+          <button id="exportBtn" class="btn btn--outline" style="flex: 1">Export</button>
+          <button id="importBtn" class="btn btn--outline" style="flex: 1">Import</button>
+          <input type="file" id="importFile" accept=".json" style="display: none" />
+        </div>
+
+        <!-- Keyboard Shortcuts -->
+        <div class="card shortcuts-card">
+          <p class="card-title">Keyboard Shortcuts</p>
+          <div class="shortcut-row"><kbd>Ctrl</kbd> + <kbd>/</kbd> <span class="shortcut-desc">Fill with saved data</span></div>
+          <div class="shortcut-row"><kbd>Ctrl</kbd> + <kbd>\</kbd> <span class="shortcut-desc">Magic fill with test data</span></div>
         </div>
       </div>
     </div>

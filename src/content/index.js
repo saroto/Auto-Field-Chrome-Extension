@@ -8,8 +8,14 @@ import { IGNORED_INPUT_TYPES } from "../shared/constants.js";
 /**
  * Hide toggle button on scroll because its fixed position will become detached
  */
+let scrollTimer = null;
 document.addEventListener("scroll", () => {
-    toggleButton.hide();
+    if (scrollTimer)
+        return;
+    scrollTimer = setTimeout(() => {
+        toggleButton.hide();
+        scrollTimer = null;
+    }, 50);
 }, { capture: true, passive: true });
 /**
  * Global focus listener to show toggle button when input is focused

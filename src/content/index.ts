@@ -12,10 +12,15 @@ import { ContentMessage, Field } from "../shared/types.js";
 /**
  * Hide toggle button on scroll because its fixed position will become detached
  */
+let scrollTimer: ReturnType<typeof setTimeout> | null = null;
 document.addEventListener(
   "scroll",
   () => {
-    toggleButton.hide();
+    if (scrollTimer) return;
+    scrollTimer = setTimeout(() => {
+      toggleButton.hide();
+      scrollTimer = null;
+    }, 50);
   },
   { capture: true, passive: true },
 );
@@ -29,7 +34,7 @@ document.addEventListener("focusin", (e) => {
     const input = target as HTMLInputElement | HTMLTextAreaElement;
     const type = input.type?.toLowerCase();
     // Ignore certain input types
-    if (!IGNORED_INPUT_TYPES.includes(type as any)) {
+    if (!IGNORED_INPUT_TYPES.includes(type)) {
       toggleButton.show(input);
     }
   }

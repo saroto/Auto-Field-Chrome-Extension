@@ -23,7 +23,7 @@ export async function fillAllFields(profileId?: string): Promise<void> {
       el instanceof HTMLSelectElement
         ? "select"
         : (el as HTMLInputElement).type?.toLowerCase();
-    if (!IGNORED_INPUT_TYPES.includes(type as any)) {
+    if (!IGNORED_INPUT_TYPES.includes(type)) {
       const nameAttr = el.name || el.id;
       if (nameAttr) {
         storageKeysToFetch.push(`autofill_${activeProfileId}_${nameAttr}`);

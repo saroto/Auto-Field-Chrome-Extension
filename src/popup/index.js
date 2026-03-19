@@ -68,11 +68,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
         // Display all profiles with URLs
         displayAllProfiles(profiles);
-        // Restore active profile
+        // Restore active profile, or auto-select one matching current URL
         const savedActiveProfile = await popupService.getActiveProfile();
+        let selectedProfile = "";
         if (savedActiveProfile && profiles[savedActiveProfile]) {
-            activeProfileId = savedActiveProfile;
+            selectedProfile = savedActiveProfile;
+        }
+        // If no active profile or it doesn't match current URL, try to find one that does
+        if (currentUrl && (!selectedProfile || !profiles[selectedProfile]?.url || !currentUrl.startsWith(profiles[selectedProfile]?.url ?? ""))) {
+            const urlMatch = profileIds.find((id) => {
+                const p = profiles[id];
+                return p?.url && currentUrl.startsWith(p.url);
+            });
+            if (urlMatch)
+                selectedProfile = urlMatch;
+        }
+        if (selectedProfile) {
+            activeProfileId = selectedProfile;
             profileSelect.value = activeProfileId;
+            await popupService.setActiveProfile(activeProfileId);
             if (!skipRestore) {
                 await loadProfileData(activeProfileId);
             }
@@ -95,11 +109,24 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             const profileCard = document.createElement("div");
             profileCard.className = "profile-card";
-            profileCard.innerHTML = `
-        <div class="profile-name"><strong>${profile.name}</strong></div>
-        <div class="profile-url"><small>URL: ${profile.url}</small></div>
-        <div class="profile-fields"><small>Fields: ${profile.fields.length}</small></div>
-      `;
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "profile-name";
+            const strong = document.createElement("strong");
+            strong.textContent = profile.name;
+            nameDiv.appendChild(strong);
+            const urlDiv = document.createElement("div");
+            urlDiv.className = "profile-url";
+            const urlSmall = document.createElement("small");
+            urlSmall.textContent = `URL: ${profile.url}`;
+            urlDiv.appendChild(urlSmall);
+            const fieldsDiv = document.createElement("div");
+            fieldsDiv.className = "profile-fields";
+            const fieldsSmall = document.createElement("small");
+            fieldsSmall.textContent = `Fields: ${profile.fields.length}`;
+            fieldsDiv.appendChild(fieldsSmall);
+            profileCard.appendChild(nameDiv);
+            profileCard.appendChild(urlDiv);
+            profileCard.appendChild(fieldsDiv);
             // Click to select this profile
             profileCard.addEventListener("click", () => {
                 profileSelect.value = id;
@@ -169,7 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         statusDiv.style.color = color;
         setTimeout(() => {
             statusDiv.textContent = "";
-        }, 2000);
+        }, 3500);
     }
     /**
      * Clear all field inputs in the container (used when switching to a fresh profile)
@@ -207,8 +234,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             showStatus("No fields detected on this page!", "red");
             return;
         }
-        const profileName = prompt("Enter profile name:");
+        const rawName = prompt("Enter profile name:");
+        if (!rawName) {
+            return;
+        }
+        const profileName = rawName.trim().substring(0, 50);
         if (!profileName) {
+            showStatus("Profile name cannot be empty", "red");
             return;
         }
         try {
@@ -300,6 +332,48 @@ document.addEventListener("DOMContentLoaded", async () => {
             showStatus("Error saving / filling", "red");
             console.error("Error saving field data:", error);
         }
+    });
+    // Export button
+    const exportBtn = document.getElementById("exportBtn");
+    exportBtn.addEventListener("click", async () => {
+        try {
+            const data = await popupService.exportAllData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], {
+                type: "application/json",
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `autofill-profiles-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showStatus("Profiles exported!", "#4caf50");
+        }
+        catch (error) {
+            showStatus("Error exporting profiles", "red");
+            console.error("Export error:", error);
+        }
+    });
+    // Import button
+    const importBtn = document.getElementById("importBtn");
+    const importFile = document.getElementById("importFile");
+    importBtn.addEventListener("click", () => importFile.click());
+    importFile.addEventListener("change", async () => {
+        const file = importFile.files?.[0];
+        if (!file)
+            return;
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            const count = await popupService.importAllData(data);
+            await loadProfilesList(true);
+            showStatus(`Imported ${count} profile(s)!`, "#4caf50");
+        }
+        catch (error) {
+            showStatus("Error importing: invalid file", "red");
+            console.error("Import error:", error);
+        }
+        importFile.value = "";
     });
     // Magic fill button
     const magicFillBtn = document.getElementById("magicFillBtn");
