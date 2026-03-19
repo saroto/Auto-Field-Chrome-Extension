@@ -13,6 +13,9 @@ function createToggleButton(): HTMLDivElement {
 
   toggleButton = document.createElement("div");
   toggleButton.className = "autofill-extension-toggle";
+  toggleButton.setAttribute("role", "button");
+  toggleButton.setAttribute("aria-label", "Auto fill this field");
+  toggleButton.setAttribute("tabindex", "0");
   toggleButton.addEventListener("mousedown", async (e) => {
     e.preventDefault(); // Keep focus on the input
     e.stopPropagation();

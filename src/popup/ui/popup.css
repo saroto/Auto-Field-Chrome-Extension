@@ -278,6 +278,17 @@ input[type="radio"] {
   background: #1f2937;
 }
 
+.btn--outline {
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn--outline:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
 /* ── Card title ─────────────────────────────────────────────── */
 .card-title {
   font-size: 10.5px;
@@ -342,6 +353,37 @@ input[type="radio"] {
 
 .profile-fields {
   font-size: 10px;
+  color: #9ca3af;
+}
+
+/* ── Keyboard shortcuts ─────────────────────────────────────── */
+.shortcuts-card {
+  padding: 10px 12px;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6b7280;
+  padding: 3px 0;
+}
+
+.shortcut-row kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: inherit;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  box-shadow: 0 1px 0 #d1d5db;
+}
+
+.shortcut-desc {
+  margin-left: 6px;
   color: #9ca3af;
 }
 
