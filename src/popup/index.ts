@@ -245,10 +245,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   /**
    * Show status message
    */
+  let statusTimer: ReturnType<typeof setTimeout> | undefined;
   function showStatus(message: string, color: string) {
     statusDiv.textContent = message;
     statusDiv.style.color = color;
-    setTimeout(() => {
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => {
       statusDiv.textContent = "";
     }, 3500);
   }
