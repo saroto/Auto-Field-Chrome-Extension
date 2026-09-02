@@ -1,6 +1,8 @@
 // src/content/ui/toggleButton.ts
 
 import { STORAGE_KEY_PREFIX } from "../../shared/constants.js";
+import { getFieldInfo } from "../services/fieldDetector.js";
+import { flashField } from "./flashField.js";
 
 let toggleButton: HTMLDivElement | null = null;
 let activeInput: HTMLInputElement | HTMLTextAreaElement | null = null;
@@ -14,7 +16,8 @@ function createToggleButton(): HTMLDivElement {
   toggleButton = document.createElement("div");
   toggleButton.className = "autofill-extension-toggle";
   toggleButton.setAttribute("role", "button");
-  toggleButton.setAttribute("aria-label", "Auto fill this field");
+  toggleButton.setAttribute("aria-label", "Fill this field with saved data");
+  toggleButton.setAttribute("title", "Fill with saved data");
   toggleButton.setAttribute("tabindex", "0");
   toggleButton.addEventListener("mousedown", async (e) => {
     e.preventDefault(); // Keep focus on the input
@@ -27,11 +30,11 @@ function createToggleButton(): HTMLDivElement {
       return;
     }
 
-    const nameAttr = activeInput.name || activeInput.id;
+    // Same key derivation as the popup and the bulk filler, so a field whose
+    // key was generated from its label still resolves here.
+    const nameAttr = getFieldInfo(activeInput)?.name;
     if (!nameAttr) {
-      console.warn(
-        "Autofill Extension: Active input has no name or id attribute.",
-      );
+      console.warn("Autofill Extension: Could not identify the active field.");
       return;
     }
 
@@ -48,6 +51,7 @@ function createToggleButton(): HTMLDivElement {
           activeInput.value = data[storageKey] as string;
           activeInput.dispatchEvent(new Event("input", { bubbles: true }));
           activeInput.dispatchEvent(new Event("change", { bubbles: true }));
+          flashField(activeInput, "saved");
           console.log(
             `Autofill Extension: Filled ${nameAttr} with saved data.`,
           );
@@ -75,9 +79,12 @@ export function show(input: HTMLInputElement | HTMLTextAreaElement): void {
 
   // Use fixed positioning so it's not affected by `transform` stacking contexts in modals
   btn.style.position = "fixed";
-  // Position the button on the right side of the input (relative to viewport)
-  btn.style.top = `${rect.top + rect.height / 2 - 12}px`;
-  btn.style.left = `${rect.right - 30}px`;
+  // Sit inside the input's right edge, vertically centred, clamped to the viewport
+  const BTN_SIZE = 27; // 24px box + 1.5px border either side
+  const top = rect.top + rect.height / 2 - BTN_SIZE / 2;
+  const left = rect.right - BTN_SIZE - 4;
+  btn.style.top = `${Math.max(4, Math.min(top, window.innerHeight - BTN_SIZE - 4))}px`;
+  btn.style.left = `${Math.max(4, Math.min(left, window.innerWidth - BTN_SIZE - 4))}px`;
   btn.style.display = "flex";
 }
 

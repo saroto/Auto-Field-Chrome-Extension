@@ -1,30 +1,93 @@
+/* ══════════════════════════════════════════════════════════════
+   Auto Fill — in-page toggle
+   Lives on someone else's page, so every declaration is defended
+   with !important and nothing is inherited from the host styles.
+   ══════════════════════════════════════════════════════════════ */
+
 .autofill-extension-toggle {
   position: fixed !important;
   z-index: 2147483647 !important; /* Max z-index to stay on top */
-  width: 24px;
-  height: 24px;
-  background-color: #4caf50;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-sizing: border-box !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #2e4b8f !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+  border-radius: 7px !important;
+  box-shadow:
+    0 1px 2px rgba(22, 25, 31, 0.2),
+    0 4px 10px rgba(46, 75, 143, 0.28) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   transition:
-    transform 0.2s,
-    background-color 0.2s;
-  border: 2px solid white;
+    transform 0.15s cubic-bezier(0.3, 1.4, 0.5, 1),
+    background-color 0.15s ease,
+    box-shadow 0.15s ease !important;
+  animation: autofill-toggle-in 0.18s cubic-bezier(0.3, 1.4, 0.5, 1) !important;
 }
 
 .autofill-extension-toggle:hover {
-  transform: scale(1.1);
-  background-color: #45a049;
+  background: #1f3771 !important;
+  transform: scale(1.12) !important;
+  box-shadow:
+    0 1px 2px rgba(22, 25, 31, 0.2),
+    0 6px 16px rgba(46, 75, 143, 0.4) !important;
 }
 
+.autofill-extension-toggle:active {
+  transform: scale(0.96) !important;
+}
+
+.autofill-extension-toggle:focus-visible {
+  outline: 2px solid #2e4b8f !important;
+  outline-offset: 2px !important;
+}
+
+/* Three ruled lines and a caret — the same mark as the popup header */
 .autofill-extension-toggle::after {
-  content: "A";
-  color: white;
-  font-weight: bold;
-  font-family: sans-serif;
-  font-size: 14px;
+  content: "" !important;
+  display: block !important;
+  width: 13px !important;
+  height: 13px !important;
+  background-color: #ffffff !important;
+  -webkit-mask-image: var(--autofill-mark) !important;
+  mask-image: var(--autofill-mark) !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+  -webkit-mask-size: contain !important;
+  mask-size: contain !important;
+}
+
+.autofill-extension-toggle {
+  --autofill-mark: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M2 3.5h12M2 8h8M2 12.5h5'/%3E%3Cpath d='M11.5 12.5h3M13 11v3'/%3E%3C/svg%3E");
+}
+
+@keyframes autofill-toggle-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Deliberately not theme-aware: this button sits on someone else's page, whose
+   background we can't know. Solid carbon blue inside a white ring reads on
+   light and dark pages alike — following the OS theme would wash it out on
+   half of them. */
+
+@media (prefers-reduced-motion: reduce) {
+  .autofill-extension-toggle {
+    animation: none !important;
+    transition: background-color 0.01ms !important;
+  }
+  .autofill-extension-toggle:hover,
+  .autofill-extension-toggle:active {
+    transform: none !important;
+  }
 }

@@ -39,9 +39,16 @@ export async function getCurrentTabUrl() {
     return tab.url || "";
 }
 /**
- * Send a message to the content script in a specific tab
+ * Thrown when the page can't host a content script at all, as opposed to a
+ * transient messaging failure. Callers use this to show a specific reason.
  */
-export async function sendMessageToTab(tabId, message) {
+export class PageNotSupportedError extends Error {
+    constructor() {
+        super("Auto Fill can't run on this page. Open a normal web page instead.");
+        this.name = "PageNotSupportedError";
+    }
+}
+function postToTab(tabId, message) {
     return new Promise((resolve, reject) => {
         chrome.tabs.sendMessage(tabId, message, (response) => {
             if (chrome.runtime.lastError) {
@@ -57,6 +64,48 @@ export async function sendMessageToTab(tabId, message) {
     });
 }
 /**
+ * Inject the content script into a tab that doesn't have one yet.
+ * The manifest only injects on navigation, so a tab opened before the extension
+ * was installed or reloaded has no listener until we put one there ourselves.
+ */
+async function injectContentScript(tabId) {
+    await chrome.scripting.executeScript({
+        target: { tabId, allFrames: true },
+        files: ["src/content/index.bundled.js"],
+    });
+    // Manifest-declared CSS isn't applied to a manual injection, so add it too.
+    await chrome.scripting.insertCSS({
+        target: { tabId, allFrames: true },
+        files: ["src/content/ui/content.css"],
+    });
+}
+/**
+ * Send a message to the content script in a specific tab, injecting the script
+ * first if nothing is listening yet.
+ */
+export async function sendMessageToTab(tabId, message) {
+    try {
+        return await postToTab(tabId, message);
+    }
+    catch (error) {
+        const reason = error instanceof Error ? error.message : String(error);
+        // Anything other than a missing listener is a real failure — don't retry.
+        if (!reason.includes("Receiving end does not exist")) {
+            throw error;
+        }
+        try {
+            await injectContentScript(tabId);
+        }
+        catch (injectError) {
+            // Restricted pages (chrome://, the Web Store, PDFs, view-source) can
+            // never host a content script. Say so plainly instead of surfacing
+            // Chrome's opaque connection error.
+            throw new PageNotSupportedError();
+        }
+        return await postToTab(tabId, message);
+    }
+}
+/**
  * Load fields from the active tab
  */
 export async function loadFieldsFromTab() {
@@ -67,7 +116,7 @@ export async function loadFieldsFromTab() {
     const response = await sendMessageToTab(tab.id, {
         action: "GET_FIELDS",
     });
-    return response.fields;
+    return { fields: response.fields, inDialog: response.inDialog === true };
 }
 /**
  * Send fill all fields message to the active tab

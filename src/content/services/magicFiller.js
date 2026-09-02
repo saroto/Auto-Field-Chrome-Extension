@@ -1,6 +1,7 @@
 // src/content/services/magicFiller.ts
 import { getAllInputs } from "./fieldDetector.js";
-import { CITIES, COMPANY_NAME_EN, COMPANY_NAME_KH, COUNTRIES, EMAIL, FIRST_NAME_EN, IGNORED_INPUT_TYPES, JOB_TITLES, LAST_NAME_EN, LOREM_PARAGRAPHS, MAGIC_FILL_BG_COLOR, NAME_KH, PHONE_NUMBERS, STATES_PROVINCES, STREET_ADDRESSES, USERNAMES, WEBSITES, } from "../../shared/constants.js";
+import { CITIES, COMPANY_NAME_EN, COMPANY_NAME_KH, COUNTRIES, EMAIL, FIRST_NAME_EN, IGNORED_INPUT_TYPES, JOB_TITLES, LAST_NAME_EN, LOREM_PARAGRAPHS, NAME_KH, PHONE_NUMBERS, STATES_PROVINCES, STREET_ADDRESSES, USERNAMES, WEBSITES, } from "../../shared/constants.js";
+import { flashField as flash } from "../ui/flashField.js";
 /**
  * Random option selection for select elements
  */
@@ -8,11 +9,7 @@ function pick(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 function flashField(el) {
-    const originalBg = el.style.backgroundColor;
-    el.style.backgroundColor = MAGIC_FILL_BG_COLOR;
-    setTimeout(() => {
-        el.style.backgroundColor = originalBg;
-    }, 800);
+    flash(el, "test");
 }
 function triggerEvents(el) {
     el.dispatchEvent(new Event("input", { bubbles: true }));

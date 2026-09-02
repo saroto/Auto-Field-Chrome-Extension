@@ -4,82 +4,47 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Auto Fill</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="ui/popup.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
   </head>
   <body>
     <div class="popup-wrapper">
-      <!-- ── Sticky header with icon actions ── -->
+      <!-- ── Header ── -->
       <header class="app-header">
         <div class="app-title">
           <svg
             width="16"
             height="16"
-            viewBox="0 0 24 24"
+            viewBox="0 0 16 16"
             fill="none"
             stroke="currentColor"
-            stroke-width="2.5"
+            stroke-width="1.6"
             stroke-linecap="round"
-            stroke-linejoin="round"
           >
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            <path d="M2 3.5h12M2 8h8M2 12.5h5" />
+            <path d="M11.5 12.5h3M13 11v3" stroke-width="1.8" />
           </svg>
           Auto Fill
         </div>
         <div class="header-actions">
           <button
-            id="saveBtn"
-            class="icon-btn icon-btn--save"
-            title="Save &amp; Fill Form"
-            aria-label="Save and fill form"
+            id="loadBtn"
+            class="icon-btn"
+            title="Rescan this page for fields"
+            aria-label="Rescan this page for fields"
           >
             <svg
-              width="14"
-              height="14"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="9 11 12 14 22 4" />
-              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-            </svg>
-          </button>
-          <button
-            id="deleteProfileBtn"
-            class="icon-btn icon-btn--delete"
-            title="Delete Profile"
-            aria-label="Delete profile"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
-              <path d="M9 6V4h6v2" />
-            </svg>
-          </button>
-          <button id="loadBtn" class="icon-btn" title="Reload Fields" aria-label="Reload fields">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
+              stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
             >
@@ -89,82 +54,164 @@
               <path d="M20.49 15a9 9 0 01-14.97 2.14L1 14" />
             </svg>
           </button>
+          <button
+            id="deleteProfileBtn"
+            class="icon-btn icon-btn--delete"
+            title="Delete the selected profile"
+            aria-label="Delete the selected profile"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 6h18" />
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+              <path d="M10 11v6M14 11v6" />
+              <path d="M9 6V4h6v2" />
+            </svg>
+          </button>
         </div>
       </header>
 
       <div class="app-body">
-        <!-- Actions (top for quick access) -->
-        <div class="action-row">
-          <button id="magicFillBtn" class="btn btn--magic" style="flex: 1">
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              style="flex-shrink: 0"
-            >
-              <path d="M15 4V2" />
-              <path d="M15 16v-2" />
-              <path d="M8 9h2" />
-              <path d="M20 9h2" />
-              <path d="M17.8 11.8L19 13" />
-              <path d="M15 9h0" />
-              <path d="M17.8 6.2L19 5" />
-              <path d="M3 21l9-9" />
-              <path d="M12.2 6.2L11 5" />
-            </svg>
-            Magic Fill
-          </button>
-        </div>
-
-        <!-- Profile Management -->
-        <div class="card">
+        <!-- ── Profile ── -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-label">Profile</span>
+          </div>
           <div class="profile-row">
-            <select id="profileSelect">
-              <option value="">-- Select Profile --</option>
+            <select id="profileSelect" aria-label="Active profile">
+              <option value="">Select a profile</option>
             </select>
-            <button id="newProfileBtn" class="btn btn--sm">+ New</button>
+            <button id="newProfileBtn" class="btn btn--sm">New</button>
           </div>
           <div id="profileUrlInfo" class="url-badge">
             <span class="url-tag">URL</span>
-            <span id="profileUrl" class="url-text">-</span>
+            <span id="profileUrl" class="url-text">Not set</span>
           </div>
-        </div>
+        </section>
 
-        <!-- Status -->
-        <div id="status"></div>
+        <!-- ── Fields ── -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-label">Fields</span>
+            <span id="fieldScope" class="scope-badge" hidden>in dialog</span>
+            <input
+              type="search"
+              id="fieldFilter"
+              class="field-filter"
+              placeholder="Filter…"
+              aria-label="Filter fields by name"
+              hidden
+            />
+            <span id="fieldCount" class="section-count"></span>
+          </div>
+          <div id="dynamicFieldsContainer" class="fields-list">
+            <p class="placeholder-msg">
+              Open a page with a form, then rescan to pull its fields in.
+            </p>
+          </div>
+        </section>
 
-        <!-- Fields container -->
-        <div id="dynamicFieldsContainer" class="card fields-card">
-          <p class="placeholder-msg">Select or create a profile…</p>
-        </div>
-
-        <!-- Saved Profiles -->
-        <div class="card">
-          <p class="card-title">Saved Profiles</p>
+        <!-- ── Saved profiles ── -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-label">Saved</span>
+            <span id="profileCount" class="section-count"></span>
+          </div>
           <div id="allProfilesList" class="profiles-list">
-            <p class="placeholder-msg">No profiles saved yet.</p>
+            <p class="placeholder-msg">
+              No profiles yet. Create one to save what you type here.
+            </p>
           </div>
-        </div>
+        </section>
 
-        <!-- Import / Export -->
-        <div class="action-row">
-          <button id="exportBtn" class="btn btn--outline" style="flex: 1">Export</button>
-          <button id="importBtn" class="btn btn--outline" style="flex: 1">Import</button>
-          <input type="file" id="importFile" accept=".json" style="display: none" />
-        </div>
+        <!-- ── Backup ── -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-label">Backup</span>
+          </div>
+          <div class="action-row">
+            <button id="exportBtn" class="btn btn--ghost">
+              Export profiles
+            </button>
+            <button id="importBtn" class="btn btn--ghost">
+              Import profiles
+            </button>
+            <input
+              type="file"
+              id="importFile"
+              accept=".json"
+              style="display: none"
+            />
+          </div>
+        </section>
 
-        <!-- Keyboard Shortcuts -->
-        <div class="card shortcuts-card">
-          <p class="card-title">Keyboard Shortcuts</p>
-          <div class="shortcut-row"><kbd>Ctrl</kbd> + <kbd>/</kbd> <span class="shortcut-desc">Fill with saved data</span></div>
-          <div class="shortcut-row"><kbd>Ctrl</kbd> + <kbd>\</kbd> <span class="shortcut-desc">Magic fill with test data</span></div>
-        </div>
+        <!-- ── Shortcuts ── -->
+        <section class="section">
+          <div class="section-head">
+            <span class="section-label">Shortcuts</span>
+          </div>
+          <div>
+            <div class="shortcut-row">
+              <kbd>Ctrl</kbd> + <kbd>/</kbd>
+              <span class="shortcut-desc">Fill with saved data</span>
+            </div>
+            <div class="shortcut-row">
+              <kbd>Ctrl</kbd> + <kbd>\</kbd>
+              <span class="shortcut-desc">Fill with test data</span>
+            </div>
+          </div>
+        </section>
       </div>
+
+      <!-- ── Status toast ── -->
+      <div id="status" role="status" aria-live="polite"></div>
+
+      <!-- ── Primary actions ── -->
+      <footer class="app-footer">
+        <button id="saveBtn" class="btn btn--primary" title="Save & fill">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+          Save &amp; fill
+        </button>
+        <button
+          id="magicFillBtn"
+          class="btn btn--magic"
+          title="Fill every field with test data"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8L19 13M17.8 6.2L19 5M12.2 6.2L11 5" />
+            <path d="M3 21L12.5 11.5" stroke-width="2.4" />
+          </svg>
+          Test data
+        </button>
+      </footer>
     </div>
 
     <script src="index.bundled.js"></script>

@@ -48,4 +48,4 @@ Output: `src/content/index.bundled.js` and `src/popup/index.bundled.js` (referen
 - Use safe DOM construction (`textContent`, `createElement`) instead of `innerHTML` with user data to prevent XSS
 - Use `CSS.escape()` when building selectors from field names
 - Dispatch both `input` and `change` events after programmatically setting field values
-- Font: Kantumruy Pro (supports Khmer script)
+- Font: Noto Sans Khmer (supports Khmer script), loaded from Google Fonts in `popup.html`

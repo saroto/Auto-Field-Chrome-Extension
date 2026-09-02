@@ -4,6 +4,8 @@ import { Field, Profile } from "../shared/types.js";
 import * as popupService from "./services/popupService.js";
 import * as fieldRenderer from "./ui/fieldRenderer.js";
 
+type StatusTone = "ok" | "error" | "info" | "magic";
+
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById(
     "dynamicFieldsContainer",
@@ -25,10 +27,53 @@ document.addEventListener("DOMContentLoaded", async () => {
   const deleteProfileBtn = document.getElementById(
     "deleteProfileBtn",
   ) as HTMLButtonElement;
+  const fieldFilter = document.getElementById(
+    "fieldFilter",
+  ) as HTMLInputElement;
+  const fieldCount = document.getElementById("fieldCount") as HTMLSpanElement;
+  const fieldScope = document.getElementById("fieldScope") as HTMLSpanElement;
+  const profileCount = document.getElementById(
+    "profileCount",
+  ) as HTMLSpanElement;
 
   let activeProfileId = "";
   let currentFields: Field[] = [];
+  // What is actually on screen. Usually the page's live fields, but falls back
+  // to the profile's stored fields when the page has none. Save and restore
+  // both read this — reading different lists is how typed values got dropped.
+  let renderedFields: Field[] = [];
   let currentUrl = "";
+
+  /**
+   * Replace a container's contents with a single empty-state message
+   */
+  function showPlaceholder(target: HTMLElement, message: string) {
+    target.textContent = "";
+    const p = document.createElement("p");
+    p.className = "placeholder-msg";
+    p.textContent = message;
+    target.appendChild(p);
+  }
+
+  /**
+   * Keep the Fields section header in sync: count badge + filter visibility
+   */
+  function updateFieldsHeader(count: number) {
+    fieldCount.textContent = count > 0 ? String(count) : "";
+    fieldFilter.hidden = count <= 8;
+    if (fieldFilter.hidden) fieldFilter.value = "";
+    applyFieldFilter();
+  }
+
+  /**
+   * Hide field rows that don't match what's typed in the filter box
+   */
+  function applyFieldFilter() {
+    const query = fieldFilter.value.trim().toLowerCase();
+    container.querySelectorAll<HTMLElement>(".field").forEach((row) => {
+      row.hidden = query !== "" && !(row.dataset.search ?? "").includes(query);
+    });
+  }
 
   /**
    * Load available fields from current page
@@ -41,13 +86,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-      const fields = await popupService.loadFieldsFromTab();
+      const { fields, inDialog } = await popupService.loadFieldsFromTab();
       currentFields = fields;
+      renderedFields = fields;
+      fieldScope.hidden = !inDialog;
       fieldRenderer.renderFields(fields, container);
+      updateFieldsHeader(fields.length);
       await loadProfilesList(skipRestore);
     } catch (error) {
-      container.innerHTML =
-        '<p class="placeholder-msg">Open a page with a form and click Reload Fields.</p>';
+      currentFields = [];
+      renderedFields = [];
+      fieldScope.hidden = true;
+      showPlaceholder(
+        container,
+        error instanceof popupService.PageNotSupportedError
+          ? error.message
+          : "Can't read this page. Open a page with a form, then rescan.",
+      );
+      updateFieldsHeader(0);
       console.error("Error loading fields:", error);
       await loadProfilesList(skipRestore);
     }
@@ -74,11 +130,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Update profile select dropdown
-    profileSelect.innerHTML = '<option value="">-- Select Profile --</option>';
+    profileSelect.textContent = "";
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "Select a profile";
+    profileSelect.appendChild(emptyOption);
+
+    profileCount.textContent =
+      profileIds.length > 0 ? String(profileIds.length) : "";
 
     if (profileIds.length === 0) {
-      allProfilesList.innerHTML =
-        '<p class="placeholder-msg">No profiles saved yet.</p>';
+      showPlaceholder(
+        allProfilesList,
+        "No profiles yet. Create one to save what you type here.",
+      );
       return;
     }
 
@@ -103,7 +168,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // If no active profile or it doesn't match current URL, try to find one that does
-    if (currentUrl && (!selectedProfile || !profiles[selectedProfile]?.url || !currentUrl.startsWith(profiles[selectedProfile]?.url ?? ""))) {
+    if (
+      currentUrl &&
+      (!selectedProfile ||
+        !profiles[selectedProfile]?.url ||
+        !currentUrl.startsWith(profiles[selectedProfile]?.url ?? ""))
+    ) {
       const urlMatch = profileIds.find((id) => {
         const p = profiles[id];
         return p?.url && currentUrl.startsWith(p.url);
@@ -115,10 +185,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       activeProfileId = selectedProfile;
       profileSelect.value = activeProfileId;
       await popupService.setActiveProfile(activeProfileId);
+      markActiveProfileCard();
       if (!skipRestore) {
         await loadProfileData(activeProfileId);
       }
     }
+  }
+
+  /**
+   * Highlight whichever saved-profile card is currently selected
+   */
+  function markActiveProfileCard() {
+    allProfilesList
+      .querySelectorAll<HTMLElement>(".profile-card")
+      .forEach((card) => {
+        const isActive = card.dataset.profileId === activeProfileId;
+        card.classList.toggle("is-active", isActive);
+        card.setAttribute("aria-pressed", String(isActive));
+      });
   }
 
   /**
@@ -128,40 +212,45 @@ document.addEventListener("DOMContentLoaded", async () => {
     const profileIds = Object.keys(profiles);
 
     if (profileIds.length === 0) {
-      allProfilesList.innerHTML =
-        '<p class="placeholder-msg">No profiles saved yet.</p>';
+      showPlaceholder(
+        allProfilesList,
+        "No profiles yet. Create one to save what you type here.",
+      );
       return;
     }
 
-    allProfilesList.innerHTML = "";
+    allProfilesList.textContent = "";
 
     profileIds.forEach((id) => {
       const profile = profiles[id];
       if (!profile) return;
-      const profileCard = document.createElement("div");
+
+      const profileCard = document.createElement("button");
+      profileCard.type = "button";
       profileCard.className = "profile-card";
+      profileCard.dataset.profileId = id;
 
       const nameDiv = document.createElement("div");
       nameDiv.className = "profile-name";
-      const strong = document.createElement("strong");
-      strong.textContent = profile.name;
-      nameDiv.appendChild(strong);
+      nameDiv.textContent = profile.name;
 
-      const urlDiv = document.createElement("div");
-      urlDiv.className = "profile-url";
-      const urlSmall = document.createElement("small");
-      urlSmall.textContent = `URL: ${profile.url}`;
-      urlDiv.appendChild(urlSmall);
+      const meta = document.createElement("div");
+      meta.className = "profile-meta";
 
-      const fieldsDiv = document.createElement("div");
-      fieldsDiv.className = "profile-fields";
-      const fieldsSmall = document.createElement("small");
-      fieldsSmall.textContent = `Fields: ${profile.fields.length}`;
-      fieldsDiv.appendChild(fieldsSmall);
+      const urlSpan = document.createElement("span");
+      urlSpan.className = "profile-url";
+      urlSpan.textContent = profile.url || "any page";
+      urlSpan.title = profile.url || "any page";
+
+      const countSpan = document.createElement("span");
+      countSpan.className = "profile-count";
+      countSpan.textContent = `${profile.fields.length} fields`;
+
+      meta.appendChild(urlSpan);
+      meta.appendChild(countSpan);
 
       profileCard.appendChild(nameDiv);
-      profileCard.appendChild(urlDiv);
-      profileCard.appendChild(fieldsDiv);
+      profileCard.appendChild(meta);
 
       // Click to select this profile
       profileCard.addEventListener("click", () => {
@@ -171,6 +260,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       allProfilesList.appendChild(profileCard);
     });
+
+    markActiveProfileCard();
   }
 
   /**
@@ -180,24 +271,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     const profile = await popupService.getProfile(profileId);
 
     if (!profile) {
-      profileUrlInfo.textContent = "-";
+      profileUrlInfo.textContent = "Not set";
       return;
     }
 
     // Display profile URL
-    profileUrlInfo.textContent = profile.url || "N/A";
+    profileUrlInfo.textContent = profile.url || "Any page";
 
     // If the page has no live fields, fall back to profile's stored fields
     if (currentFields.length === 0 && profile.fields.length > 0) {
       fieldRenderer.renderFields(profile.fields, container);
+      updateFieldsHeader(profile.fields.length);
+      renderedFields = profile.fields;
     }
 
     // Clear all inputs first so fields not saved in this profile appear blank
     clearFieldInputs();
 
     // Load saved values and populate inputs
-    const fieldsToUse =
-      currentFields.length > 0 ? currentFields : profile.fields;
+    const fieldsToUse = renderedFields;
     const fieldNames = fieldsToUse.map((f) => f.name);
     const savedValues = await popupService.loadProfileFieldValues(
       profileId,
@@ -214,7 +306,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Restore checkbox group
         const checkedValues = value.split(",");
         const checkboxes = container.querySelectorAll<HTMLInputElement>(
-          `[data-group="${fieldName}"]`,
+          `[data-group="${CSS.escape(fieldName)}"]`,
         );
         checkboxes.forEach((cb) => {
           cb.checked = checkedValues.includes(cb.dataset.value ?? "");
@@ -228,7 +320,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else if (field?.type === "radio") {
         // Restore radio group: check the matching option
         const radios = container.querySelectorAll<HTMLInputElement>(
-          `[data-group="${fieldName}"]`,
+          `[data-group="${CSS.escape(fieldName)}"]`,
         );
         radios.forEach((rb) => {
           rb.checked = rb.dataset.value === value;
@@ -243,16 +335,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   /**
-   * Show status message
+   * Show a toast above the action bar. Fades out on its own; no layout shift.
    */
   let statusTimer: ReturnType<typeof setTimeout> | undefined;
-  function showStatus(message: string, color: string) {
+  function showStatus(message: string, tone: StatusTone = "info") {
     statusDiv.textContent = message;
-    statusDiv.style.color = color;
+    statusDiv.className = `is-visible is-${tone}`;
+    statusDiv.title = message;
     clearTimeout(statusTimer);
     statusTimer = setTimeout(() => {
-      statusDiv.textContent = "";
-    }, 3500);
+      statusDiv.className = `is-${tone}`;
+    }, 3000);
   }
 
   /**
@@ -276,14 +369,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Initialize
   await loadFields();
 
+  // Field filter
+  fieldFilter.addEventListener("input", applyFieldFilter);
+
   // Profile select change
   profileSelect.addEventListener("change", async () => {
     activeProfileId = profileSelect.value;
+    markActiveProfileCard();
 
     if (!activeProfileId) {
-      container.innerHTML =
-        '<p class="placeholder-msg">Please select a profile.</p>';
-      profileUrlInfo.textContent = "-";
+      // Keep the detected fields on screen — they belong to the page, not the
+      // profile — but drop the values that came from the profile we just left.
+      clearFieldInputs();
+      profileUrlInfo.textContent = "Not set";
       return;
     }
 
@@ -294,17 +392,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   // New profile button
   newProfileBtn.addEventListener("click", async () => {
     if (currentFields.length === 0) {
-      showStatus("No fields detected on this page!", "red");
+      showStatus("No fields on this page to save", "error");
       return;
     }
 
-    const rawName = prompt("Enter profile name:");
+    const rawName = prompt("Name this profile:");
     if (!rawName) {
       return;
     }
     const profileName = rawName.trim().substring(0, 50);
     if (!profileName) {
-      showStatus("Profile name cannot be empty", "red");
+      showStatus("A profile needs a name", "error");
       return;
     }
 
@@ -318,11 +416,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       await popupService.setActiveProfile(activeProfileId);
       await loadProfilesList();
       profileSelect.value = activeProfileId;
+      markActiveProfileCard();
       // Clear all inputs so the new profile starts blank
       clearFieldInputs();
-      showStatus("Profile created!", "#4caf50");
+      showStatus(`Created ${profileName}`, "ok");
     } catch (error) {
-      showStatus("Error creating profile", "red");
+      showStatus("Couldn't create the profile", "error");
       console.error("Error creating profile:", error);
     }
   });
@@ -330,45 +429,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Delete profile button
   deleteProfileBtn.addEventListener("click", async () => {
     if (!activeProfileId) {
-      showStatus("Please select a profile to delete", "red");
+      showStatus("Select a profile to delete", "error");
       return;
     }
 
-    if (!confirm("Are you sure you want to delete this profile?")) {
+    const profile = await popupService.getProfile(activeProfileId);
+    const name = profile?.name ?? "this profile";
+    if (!confirm(`Delete "${name}" and everything saved in it?`)) {
       return;
     }
 
     try {
       await popupService.deleteProfile(activeProfileId);
       activeProfileId = "";
+      clearFieldInputs();
       await loadProfilesList();
-      container.innerHTML =
-        '<p class="placeholder-msg">Profile deleted. Select or create a profile.</p>';
-      profileUrlInfo.textContent = "-";
-      showStatus("Profile deleted!", "#4caf50");
+      profileUrlInfo.textContent = "Not set";
+      showStatus(`Deleted ${name}`, "ok");
     } catch (error) {
-      showStatus("Error deleting profile", "red");
+      showStatus("Couldn't delete the profile", "error");
       console.error("Error deleting profile:", error);
     }
   });
 
-  // Reload fields button
+  // Rescan page button
   const loadBtn = document.getElementById("loadBtn") as HTMLButtonElement;
   loadBtn.addEventListener("click", async () => {
     clearFieldInputs();
     await loadFields(true);
-    showStatus("Fields reloaded!", "#6366f1");
+    const n = currentFields.length;
+    const where = fieldScope.hidden ? "" : " in the dialog";
+    showStatus(
+      n === 0
+        ? `No fields found${where || " here"}`
+        : `Found ${n} field${n === 1 ? "" : "s"}${where}`,
+      n === 0 ? "error" : "info",
+    );
   });
 
   // Save button
   saveBtn.addEventListener("click", async () => {
     if (!activeProfileId) {
-      showStatus("Please select a profile first", "red");
+      showStatus("Select a profile first", "error");
+      return;
+    }
+
+    if (renderedFields.length === 0) {
+      showStatus("No fields to save yet — rescan the page", "error");
       return;
     }
 
     const fieldValues: Record<string, string> = {};
-    currentFields.forEach((field) => {
+    renderedFields.forEach((field) => {
       if (
         field.type === "checkbox" &&
         field.options &&
@@ -383,8 +495,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           .map((cb) => cb.dataset.value ?? "");
         fieldValues[field.name] = checked.join(",");
       } else if (field.type === "checkbox") {
+        // getElementById takes a raw id, not a selector — escaping it here
+        // would miss any field name containing ".", "[", ":" and friends.
         const inputEl = document.getElementById(
-          `input_${CSS.escape(field.name)}`,
+          `input_${field.name}`,
         ) as HTMLInputElement;
         if (inputEl) fieldValues[field.name] = String(inputEl.checked);
       } else if (field.type === "radio") {
@@ -395,7 +509,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         fieldValues[field.name] = checked?.dataset.value ?? "";
       } else {
         const inputEl = document.getElementById(
-          `input_${CSS.escape(field.name)}`,
+          `input_${field.name}`,
         ) as HTMLInputElement;
         if (inputEl) fieldValues[field.name] = inputEl.value;
       }
@@ -405,9 +519,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       await popupService.saveProfileFieldValues(activeProfileId, fieldValues);
       // Also fill the form immediately after saving
       await popupService.fillTabFields(activeProfileId);
-      showStatus("Saved & filled!", "#4caf50");
+      showStatus("Saved and filled", "ok");
     } catch (error) {
-      showStatus("Error saving / filling", "red");
+      showStatus("Couldn't save or fill", "error");
       console.error("Error saving field data:", error);
     }
   });
@@ -426,9 +540,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       a.download = `autofill-profiles-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showStatus("Profiles exported!", "#4caf50");
+      showStatus("Exported to your downloads", "ok");
     } catch (error) {
-      showStatus("Error exporting profiles", "red");
+      showStatus("Couldn't export profiles", "error");
       console.error("Export error:", error);
     }
   });
@@ -445,9 +559,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       const data = JSON.parse(text);
       const count = await popupService.importAllData(data);
       await loadProfilesList(true);
-      showStatus(`Imported ${count} profile(s)!`, "#4caf50");
+      showStatus(
+        `Imported ${count} profile${count === 1 ? "" : "s"}`,
+        "ok",
+      );
     } catch (error) {
-      showStatus("Error importing: invalid file", "red");
+      showStatus("That file isn't a profile export", "error");
       console.error("Import error:", error);
     }
     importFile.value = "";
@@ -460,9 +577,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   magicFillBtn.addEventListener("click", async () => {
     try {
       await popupService.magicFillTab();
-      showStatus("Magic Filled with Fake Data!", "#9c27b0");
+      showStatus("Filled with test data", "magic");
     } catch (error) {
-      showStatus("Error: Could not perform magic fill.", "red");
+      showStatus("Couldn't fill this page", "error");
       console.error("Error in magic fill:", error);
     }
   });
