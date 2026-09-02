@@ -9,7 +9,10 @@ export const IGNORED_INPUT_TYPES: readonly string[] = [
   "hidden",
 ];
 
-export const MAGIC_FILL_BG_COLOR = "#f3e5f5";
+// Fill highlights, matching the popup accents: carbon blue for your own saved
+// data, duplicate pink for generated test data.
+export const SAVED_FILL_BG_COLOR = "#e4ecfb";
+export const MAGIC_FILL_BG_COLOR = "#fbe3ee";
 export const STORAGE_KEY_PREFIX = "autofill";
 
 export const COMPANY_NAME_KH = [

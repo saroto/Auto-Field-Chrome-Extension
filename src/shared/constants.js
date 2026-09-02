@@ -7,7 +7,10 @@ export const IGNORED_INPUT_TYPES = [
     "reset",
     "hidden",
 ];
-export const MAGIC_FILL_BG_COLOR = "#f3e5f5";
+// Fill highlights, matching the popup accents: carbon blue for your own saved
+// data, duplicate pink for generated test data.
+export const SAVED_FILL_BG_COLOR = "#e4ecfb";
+export const MAGIC_FILL_BG_COLOR = "#fbe3ee";
 export const STORAGE_KEY_PREFIX = "autofill";
 export const COMPANY_NAME_KH = [
     "ធនាគារ អេស៊ីលីដា",
@@ -86,26 +89,26 @@ export const FIRST_NAME_EN = [
     "Logan", "Quinn", "Reese", "Skyler", "Drew", "Blake",
 ];
 export const EMAIL = [
-    "alex.rivera@gmail.com",
-    "sarah.j.smith@outlook.com",
-    "m.chen.dev@yahoo.com",
-    "jordan.taylor92@icloud.com",
-    "claire.vanderbilt@protonmail.com",
-    "root@localhost.dev",
-    "test-user-01@sandbox.io",
-    "admin@company-portal.net",
-    "api.tester@endpoint.solutions",
-    "bug_hunter@qa-triage.com",
-    "constantine.alexander.maximilian@university-records.edu",
-    "bobby.tables-drop-database@security-audit.org",
-    "info-department-west-region-04@global-logistics-corp.biz",
-    "user.name+extra.tag.123@subdomain.provider.co.uk",
-    "k.seang.dev.testing.account@internal-workflow.systems",
-    "a@b.com",
-    "dev@me.io",
-    "hi@xyz.net",
-    "test@123.org",
-    "go@run.dev",
+    "alex.rivera@example.com",
+    "sarah.j.smith@example.org",
+    "m.chen.dev@example.net",
+    "jordan.taylor92@example.com",
+    "claire.vanderbilt@example.org",
+    "root@example.test",
+    "test-user-01@example.net",
+    "admin@example.com",
+    "api.tester@example.org",
+    "bug_hunter@example.net",
+    "constantine.alexander.maximilian@example.com",
+    "bobby.tables-drop-database@example.org",
+    "info-department-west-region-04@example.net",
+    "user.name+extra.tag.123@example.com",
+    "k.seang.dev.testing@example.org",
+    "a@example.com",
+    "dev@example.net",
+    "hi@example.org",
+    "test@example.com",
+    "go@example.test",
 ];
 export const PHONE_NUMBERS = [
     "+1 (555) 234-5678",

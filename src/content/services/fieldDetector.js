@@ -44,12 +44,121 @@ function isElementVisible(el) {
 }
 import { IGNORED_INPUT_TYPES } from "../../shared/constants.js";
 /**
- * Find all inputs, textareas, and selects in the document, piercing through Shadow DOM and iframes
+ * Selectors that identify a dialog, most standards-based first. The framework
+ * class names at the end are a last resort for libraries that don't set the
+ * ARIA attributes.
  */
-export function getAllInputs() {
+const MODAL_SELECTORS = [
+    "dialog[open]",
+    '[aria-modal="true"]',
+    '[role="dialog"]',
+    '[role="alertdialog"]',
+    ".modal.show",
+    ".modal.in",
+    ".ReactModal__Content",
+    ".MuiDialog-container",
+    ".ant-modal-wrap",
+    ".v-dialog--active",
+];
+/**
+ * Highest z-index anywhere in the element's ancestor chain, used to decide
+ * which of several candidates is actually painted on top.
+ */
+function stackingScore(el) {
+    let best = 0;
+    let node = el;
+    while (node && node !== document.body) {
+        const z = parseInt(window.getComputedStyle(node).zIndex, 10);
+        if (!Number.isNaN(z))
+            best = Math.max(best, z);
+        node = node.parentElement;
+    }
+    return best;
+}
+/** A <dialog> opened with showModal() sits in the top layer above everything. */
+function isTopLayer(el) {
+    try {
+        return el.matches(":modal");
+    }
+    catch {
+        return false; // :modal is unsupported on older engines
+    }
+}
+function collectModalCandidates() {
+    const found = [];
+    const selector = MODAL_SELECTORS.join(",");
+    const scan = (root) => {
+        root.querySelectorAll(selector).forEach((el) => {
+            if (!found.includes(el))
+                found.push(el);
+        });
+    };
+    scan(document);
+    // Walking every element to find shadow roots is expensive, so only do it when
+    // the light DOM turned up nothing.
+    if (found.length === 0) {
+        const queue = [document];
+        const seen = new Set();
+        while (queue.length > 0) {
+            const root = queue.shift();
+            if (!root || seen.has(root))
+                continue;
+            seen.add(root);
+            scan(root);
+            root.querySelectorAll("*").forEach((el) => {
+                if (el.shadowRoot)
+                    queue.push(el.shadowRoot);
+            });
+        }
+    }
+    return found;
+}
+/**
+ * Find the dialog currently on top, or null when the page has none open.
+ *
+ * When a dialog is open, the fields behind it aren't reachable by the user, so
+ * filling them would silently write to a form they can't see. Everything below
+ * scopes to this element when it exists.
+ */
+export function findActiveModal() {
+    const visible = collectModalCandidates().filter((el) => {
+        // A closed dialog usually stays in the DOM with display:none.
+        if (el instanceof HTMLDialogElement && !el.open)
+            return false;
+        return isElementVisible(el);
+    });
+    if (visible.length === 0)
+        return null;
+    // Prefer the innermost candidate: libraries often nest role="dialog" inside
+    // an aria-modal wrapper, and the inner node is the tighter scope.
+    const innermost = visible.filter((el) => !visible.some((other) => other !== el && el.contains(other)));
+    const candidates = innermost.length > 0 ? innermost : visible;
+    let best = candidates[0];
+    let bestKey = [
+        isTopLayer(best) ? 1 : 0,
+        stackingScore(best),
+    ];
+    for (const el of candidates.slice(1)) {
+        const key = [isTopLayer(el) ? 1 : 0, stackingScore(el)];
+        // Later in the list wins ties, which favours the most recently opened.
+        if (key[0] > bestKey[0] ||
+            (key[0] === bestKey[0] && key[1] >= bestKey[1])) {
+            best = el;
+            bestKey = key;
+        }
+    }
+    return best;
+}
+/**
+ * Find all inputs, textareas, and selects, piercing through Shadow DOM and
+ * iframes. Defaults to the open dialog when there is one, so callers never
+ * touch fields hidden behind it.
+ */
+export function getAllInputs(scope) {
+    const searchRoot = scope ?? findActiveModal() ?? document;
     try {
         const inputs = [];
-        const queue = [document];
+        const queue = [searchRoot];
         const visited = new Set();
         while (queue.length > 0) {
             const node = queue.shift();
@@ -91,16 +200,32 @@ export function getAllInputs() {
     }
     catch (err) {
         console.error("Autofill Extension: Error traversing DOM for inputs.", err);
-        // Fallback if the traversal somehow fails
-        const fallbackInputs = document.querySelectorAll("input, textarea, select");
+        // Fallback if the traversal somehow fails — still respects the dialog scope
+        const fallbackInputs = searchRoot.querySelectorAll("input, textarea, select");
         return Array.from(fallbackInputs).filter((el) => el instanceof HTMLElement && isElementVisible(el));
     }
+}
+/**
+ * Position of a control among all controls in its root. Fields that carry no
+ * name or id have no author-provided identity, so their storage key has to be
+ * derived from something stable — this index survives a page reload, whereas a
+ * random suffix does not.
+ */
+function controlIndex(input) {
+    const root = (input.getRootNode?.() || input.ownerDocument || document);
+    const all = root.querySelectorAll("input, textarea, select");
+    return Array.prototype.indexOf.call(all, input);
 }
 /**
  * Extract field information (label, name, type, etc.) from an input, textarea, or select element
  */
 export function getFieldInfo(input) {
     const root = (input.getRootNode?.() || input.ownerDocument || document);
+    // Group lookups match on `name`, which isn't unique across the page, so a
+    // dialog field must only gather options from inside that dialog. Lookups
+    // keyed on an id (label[for], aria-labelledby) stay document-wide — ids are
+    // unique, so they can't bleed, and the target may legitimately sit outside.
+    const groupScope = input.closest(MODAL_SELECTORS.join(",")) ?? root;
     const type = input instanceof HTMLSelectElement ? "select" : input.type?.toLowerCase();
     // Ignore certain input types
     if (IGNORED_INPUT_TYPES.includes(type)) {
@@ -156,7 +281,10 @@ export function getFieldInfo(input) {
             }
             if (parent.previousElementSibling) {
                 const prev = parent.previousElementSibling;
-                if (prev.tagName === "LABEL" && prev.textContent) {
+                // Skip a label that wraps its own control — it names that field, not
+                // this one, and borrowing it collides two fields onto one key.
+                const prevOwnsAControl = !!prev.querySelector("input, textarea, select");
+                if (prev.tagName === "LABEL" && prev.textContent && !prevOwnsAControl) {
                     labelText = prev.textContent.trim();
                     break;
                 }
@@ -180,14 +308,12 @@ export function getFieldInfo(input) {
     // Finalize nameAttr with stable fallback
     let nameAttr = rawNameAttr;
     if (!nameAttr) {
-        if (labelText) {
-            nameAttr = "gen_" + labelText.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
-        }
-        else {
-            // Very last resort, still potentially unstable but rare if label exists
-            nameAttr =
-                "autofill_gen_unknown_" + Math.random().toString(36).substring(2, 6);
-        }
+        // The index keeps the key unique — label heuristics can hand two different
+        // fields the same text — and keeps it reproducible on the next visit.
+        const slug = labelText
+            ? labelText.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()
+            : type || "field";
+        nameAttr = `gen_${slug}_${controlIndex(input)}`;
         input.id = nameAttr;
     }
     if (!nameAttr) {
@@ -253,7 +379,7 @@ export function getFieldInfo(input) {
             .map((o) => ({ value: o.value, label: o.text.trim() }));
     }
     else if (type === "radio" && input.name) {
-        const radios = root.querySelectorAll(`input[type="radio"][name="${CSS.escape(input.name)}"]`);
+        const radios = groupScope.querySelectorAll(`input[type="radio"][name="${CSS.escape(input.name)}"]`);
         options = Array.from(radios).map((r) => {
             let radioLabel = r.value;
             if (r.id) {
@@ -279,7 +405,7 @@ export function getFieldInfo(input) {
         });
     }
     else if (type === "checkbox" && input.name) {
-        const boxes = root.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(input.name)}"]`);
+        const boxes = groupScope.querySelectorAll(`input[type="checkbox"][name="${CSS.escape(input.name)}"]`);
         if (boxes.length > 1) {
             options = Array.from(boxes).map((cb) => {
                 let cbLabel = cb.value;

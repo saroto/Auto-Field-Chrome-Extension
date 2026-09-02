@@ -12,7 +12,6 @@ import {
   JOB_TITLES,
   LAST_NAME_EN,
   LOREM_PARAGRAPHS,
-  MAGIC_FILL_BG_COLOR,
   NAME_KH,
   PHONE_NUMBERS,
   STATES_PROVINCES,
@@ -20,6 +19,7 @@ import {
   USERNAMES,
   WEBSITES,
 } from "../../shared/constants.js";
+import { flashField as flash } from "../ui/flashField.js";
 
 /**
  * Random option selection for select elements
@@ -30,11 +30,7 @@ function pick<T>(arr: readonly T[]): T {
 }
 
 function flashField(el: HTMLElement): void {
-  const originalBg = el.style.backgroundColor;
-  el.style.backgroundColor = MAGIC_FILL_BG_COLOR;
-  setTimeout(() => {
-    el.style.backgroundColor = originalBg;
-  }, 800);
+  flash(el, "test");
 }
 
 function triggerEvents(el: HTMLElement): void {

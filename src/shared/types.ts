@@ -30,6 +30,12 @@ export interface GetFieldsMessage {
   action: "GET_FIELDS";
 }
 
+export interface GetFieldsResponse {
+  fields: Field[];
+  /** True when detection was scoped to an open dialog rather than the page. */
+  inDialog: boolean;
+}
+
 export interface FillAllFieldsMessage {
   action: "FILL_ALL_FIELDS";
   profile: string; // This is now the profile ID
